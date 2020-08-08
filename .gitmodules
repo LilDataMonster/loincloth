@@ -1,3 +1,0 @@
-[submodule "components/ldm-esp-lib"]
-	path = components/ldm-esp-lib
-	url = git@github.com:LilDataMonster/ldm-esp-lib.git
