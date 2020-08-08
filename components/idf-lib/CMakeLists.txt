@@ -5,15 +5,13 @@ else()
     set(cert_pem "")
 endif()
 
-idf_component_register(SRCS "src/ble.cpp"
-                            "src/http.cpp"
-                            "src/ota.cpp"
-                            "src/wifi.cpp"
-                    INCLUDE_DIRS include/
-                    REQUIRES "bt"
-                             "json"
-                             "esp-tls"
-                             "esp_http_client"
-                             "esp_https_ota"
-                    EMBED_TXTFILES ${cert_pem}
+idf_component_register(
+    SRC_DIRS src
+    INCLUDE_DIRS include
+    REQUIRES bt
+             json
+             esp-tls
+             esp_http_client
+             esp_https_ota
+    EMBED_TXTFILES ${cert_pem}
 )
