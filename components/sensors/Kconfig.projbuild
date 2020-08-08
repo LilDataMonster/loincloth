@@ -1,0 +1,64 @@
+menu "LDM Sensors"
+
+# DHT11 Configuration
+    config DHT_SENSOR_ENABLED
+        bool "Enable DHT Temperature/Humidity Sensor"
+        default False
+        help
+            Enable DHT Sensor.
+
+    menu "DHT Sensor Configuration"
+    depends on DHT_SENSOR_ENABLED
+
+        config DHT_GPIO
+            int "DHT GPIO Pin"
+            default 4
+            help
+                GPIO Pin to read the DHT11 sensor.
+
+        choice DHT_TYPE
+            prompt "DHT Sensor Type"
+            default DHT_TYPE_DHT11
+            help
+                DHT Sensor Type.
+
+            config DHT_TYPE_DHT11
+                bool "DHT11"
+            config DHT_TYPE_DHT22
+                bool "DHT22"
+        endchoice
+
+    endmenu
+# End DHT11 Configuration
+
+# BME680 Configuration
+    config BME680_SENSOR_ENABLED
+        bool "Enable BME680 Temperature/Humidity/Pressure/Gas Sensor"
+        default False
+        help
+            Enable BME680 Sensor.
+
+    menu "BME680 Configuration"
+    depends on BME680_SENSOR_ENABLED
+        config I2C_SCL
+            int "I2C SCL GPIO Pin"
+            default 19
+            help
+                SCL Pin to read I2C.
+
+        config I2C_SDA
+            int "I2C SDA GPIO Pin"
+            default 18
+            help
+                SDA Pin to read I2C.
+
+        config I2C_PORT
+            int "I2C PORT"
+            default 0
+            help
+                Port to read I2C.
+
+    endmenu
+# End BME680 Configuration
+
+endmenu
