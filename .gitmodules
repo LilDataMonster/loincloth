@@ -7,3 +7,6 @@
 [submodule "components/ldm-sensors"]
 	path = components/ldm-sensors
 	url = https://github.com/LilDataMonster/ldm-sensors.git
+[submodule "components/esp32-camera"]
+	path = components/esp32-camera
+	url = https://github.com/espressif/esp32-camera.git
