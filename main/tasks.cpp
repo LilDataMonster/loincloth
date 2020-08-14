@@ -14,6 +14,8 @@
 #include <ble.hpp>
 #include <ota.hpp>
 
+#include <sleep.hpp>
+
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
 #define BLE_ADVERTISE_DURATION CONFIG_BLE_ADVERTISE_DURATION
 
@@ -31,7 +33,7 @@ void sensor_task(void *pvParameters) {
     LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
 
     // initialize sensor
-    if(!sensor->init()) {
+    if(sensor->init() != ESP_OK) {
         ESP_LOGE(SENSOR_TASK_LOG, "Failed to initialize sensor");
         return;
     }
@@ -112,8 +114,9 @@ void http_task(void *pvParameters) {
 void sleep_task(void *pvParameters) {
     while(true) {
         if(messageFinished) {
-            ESP_LOGI(SLEEP_TASK_LOG, "Entering Deep Sleep");
-            esp_deep_sleep(SLEEP_DURATION * 1E6);
+            // ESP_LOGI(SLEEP_TASK_LOG, "Entering Deep Sleep");
+            // esp_deep_sleep(SLEEP_DURATION * 1E6);
+            LDM::Sleep::enterDeepSleepSec(SLEEP_DURATION);
         }
         vTaskDelay(pdMS_TO_TICKS(500));
     }
