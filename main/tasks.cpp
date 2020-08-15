@@ -15,6 +15,8 @@
 #include <ota.hpp>
 
 #include <sleep.hpp>
+#include <camera.hpp>
+#include <cstring>
 
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
 #define BLE_ADVERTISE_DURATION CONFIG_BLE_ADVERTISE_DURATION
@@ -40,7 +42,6 @@ void sensor_task(void *pvParameters) {
 
     while(true){
         sensor->readSensor();
-
         // If you read the sensor data too often, it will heat up
         // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
         // vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -84,10 +85,11 @@ void http_task(void *pvParameters) {
     LDM::OTA ota(const_cast<char*>(FIRMWARE_UPGRADE_ENDPOINT));
 #endif
 
+    LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
+
     wifi.init_sta();
 
     // create JSON message
-    LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
     cJSON *message = sensor->buildJson();
 
     // POST
@@ -112,10 +114,10 @@ void http_task(void *pvParameters) {
 
 #define SLEEP_TASK_LOG "SLEEP_TASK"
 void sleep_task(void *pvParameters) {
+    LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
     while(true) {
         if(messageFinished) {
-            // ESP_LOGI(SLEEP_TASK_LOG, "Entering Deep Sleep");
-            // esp_deep_sleep(SLEEP_DURATION * 1E6);
+            sensor->deinit();
             LDM::Sleep::enterDeepSleepSec(SLEEP_DURATION);
         }
         vTaskDelay(pdMS_TO_TICKS(500));

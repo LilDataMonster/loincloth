@@ -16,8 +16,8 @@ static LDM::DHT sensor;
 #endif
 
 #if CONFIG_CAMERA_SENSOR_ENABLED
-#include <ldm-camera.hpp>
-static LDM::Camera sensor(FRAMESIZE_SVGA, PIXFORMAT_JPEG, 12, 1);
+#include <camera.hpp>
+static LDM::Camera sensor(FRAMESIZE_VGA, PIXFORMAT_JPEG, 12, 1);
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
@@ -37,8 +37,6 @@ void app_main(void);
 void app_main(void) {
 
     LDM::Sleep::getWakeupCause();
-    // esp_sleep_source_t wakeup_cause = nvs.getWakeupCause();
-    // nvs.getWakeupCause();
 
     // open the "broadcast" key-value pair from the "state" namespace in NVS
     uint8_t broadcast = 0; // value will default to 0, if not set yet in NVS
@@ -46,9 +44,9 @@ void app_main(void) {
     // initialize nvs
     LDM::NVS nvs;
     nvs.openNamespace("state");
-    // nvs.getKeyU8("broadcast", &broadcast);
-    // broadcast++;
-    // nvs.setKeyU8("broadcast", broadcast);
+    nvs.getKeyU8("broadcast", &broadcast);
+    broadcast++;
+    nvs.setKeyU8("broadcast", broadcast);
     nvs.commit();
     nvs.close();
 
@@ -74,16 +72,16 @@ void app_main(void) {
     xTaskCreate(sensor_task, "sensor_task", configMINIMAL_STACK_SIZE * 8, (void*)&sensor, 5, NULL);
 
     // setup broadcasting method
-#ifndef CONFIG_IDF_TARGET_ESP32S2
-    if(broadcast % 2 == 0) {
-        xTaskCreate(http_task, "http_task", 8192, (void*)&sensor, 5, NULL);
-    } else {
-        xTaskCreate(ble_task, "ble_task", 8192*2, NULL, 5, NULL);
-    }
-#else
+// #ifndef CONFIG_IDF_TARGET_ESP32S2
+//     if(broadcast % 2 == 0) {
+//         xTaskCreate(http_task, "http_task", 8192, (void*)&sensor, 5, NULL);
+//     } else {
+//         xTaskCreate(ble_task, "ble_task", 8192*2, NULL, 5, NULL);
+//     }
+// #else
     xTaskCreate(http_task, "http_task", 8192, (void*)&sensor, 5, NULL);
-#endif
+// #endif
 
     // setup watcher for sleep
-    xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE * 3, NULL, 5, NULL);
+    xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE * 3, (void*)&sensor, 5, NULL);
 }
