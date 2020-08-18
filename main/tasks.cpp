@@ -17,6 +17,7 @@
 #include <sleep.hpp>
 #include <camera.hpp>
 #include <cstring>
+#include <vector>
 
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
 #define BLE_ADVERTISE_DURATION CONFIG_BLE_ADVERTISE_DURATION
@@ -26,22 +27,26 @@ static bool messageFinished = false;
 
 #define SENSOR_TASK_LOG "SENSOR_TASK"
 void sensor_task(void *pvParameters) {
+// void sensor_task(std::vector<LDM::Sensor>& sensors) {
 
     if(pvParameters == NULL) {
         ESP_LOGE(SENSOR_TASK_LOG, "Invalid Sensor Recieved");
         return;
     }
 
-    LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
+    std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
 
-    // initialize sensor
-    if(sensor->init() != ESP_OK) {
-        ESP_LOGE(SENSOR_TASK_LOG, "Failed to initialize sensor");
-        return;
+    for(auto const& sensor : *sensors) {
+        if(sensor->init() != ESP_OK) {
+            ESP_LOGE(SENSOR_TASK_LOG, "Failed to initialize sensor");
+            return;
+        }
     }
 
     while(true){
-        sensor->readSensor();
+        for(auto const& sensor : *sensors) {
+            sensor->readSensor();
+        }
         // If you read the sensor data too often, it will heat up
         // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
         // vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -85,24 +90,66 @@ void http_task(void *pvParameters) {
     LDM::OTA ota(const_cast<char*>(FIRMWARE_UPGRADE_ENDPOINT));
 #endif
 
-    LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
+    // // LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
+    // std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
 
+    char* post_data = (char*)pvParameters;
+    ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
+
+    // sensors->at(0)->init();
+    // sensors->at(0)->readSensor();
+    // cJSON *message = sensors->at(0)->buildJson();
+    // char* output = cJSON_Print(message);
+    // printf("%s", output);
+    // for(auto const& sensor : *sensors) {
+    //     sensor->readSensor();
+    // }
     wifi.init_sta();
 
     // create JSON message
-    cJSON *message = sensor->buildJson();
+    // cJSON *message = sensor->buildJson();
+    // cJSON *message = sensors->at(0)->buildJson();
+    //
+    // if(message != NULL) {
+    //     char* output = cJSON_Print(message);
+    //     printf("%s", output);
+    // }
+
+    // cJSON *message = cJSON_CreateObject();
+    // for(auto const& sensor : *sensors) {
+    //     printf("Building Sensor JSON\n");
+    //     cJSON *json_sensor = sensor->buildJson();
+    // }
+    // for(auto const& sensor : *sensors) {
+    //     cJSON *json_sensor = sensor->buildJson();
+    //     // cJSON_AddItemToObject(message, sensor->getSensorName(), json_sensor);
+    //
+    //     // printf("%s", sensor->getSensorName());
+    //
+    //     char* output = cJSON_Print(json_sensor);
+    //     if(output != NULL) {
+    //         printf("%s", output);
+    //     } else {
+    //         printf("cJSON_Print output is NULL!\n");
+    //     }
+    //     cJSON_AddItemToObject(message, "sensor", json_sensor);
+    // }
+
+    // char* output = cJSON_Print(message);
+    // printf("%s", output);
 
     // POST
-    http.postJSON(message);
+    // http.postJSON(message);
+    http.postFormattedJSON(post_data);
 
 #ifdef CONFIG_OTA_ENABLED
     // check OTA updates
     ota.checkUpdates(true);
 #endif
 
-    // cleanup JSON message
-    cJSON_Delete(message);
-    message = NULL;
+    // // cleanup JSON message
+    // cJSON_Delete(message);
+    // message = NULL;
 
     // vEventGroupDelete(s_wifi_event_group);
     wifi.deinit_sta();
@@ -114,10 +161,16 @@ void http_task(void *pvParameters) {
 
 #define SLEEP_TASK_LOG "SLEEP_TASK"
 void sleep_task(void *pvParameters) {
-    LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
+    std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
+
     while(true) {
         if(messageFinished) {
-            sensor->deinit();
+            // deinitialize sensors
+            for(auto const& sensor : *sensors) {
+                sensor->deinit();
+            }
+
+            // enter deep sleep
             LDM::Sleep::enterDeepSleepSec(SLEEP_DURATION);
         }
         vTaskDelay(pdMS_TO_TICKS(500));

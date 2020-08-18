@@ -7,32 +7,45 @@
 #include <time.h>
 #include <sys/time.h>
 #include <tasks.hpp>
+#include <vector>
 
 #define APP_TAG "LOINCLOTH"
 
 #if CONFIG_DHT_SENSOR_ENABLED
 #include <dht.hpp>
-static LDM::DHT sensor;
-#endif
-
-#if CONFIG_CAMERA_SENSOR_ENABLED
-#include <camera.hpp>
-static LDM::Camera sensor(FRAMESIZE_VGA, PIXFORMAT_JPEG, 12, 1);
+static LDM::DHT dht;
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
 #include <bme680.hpp>
-static LDM::BME680 sensor;
+static LDM::BME680 bme680;
+#endif
+
+#if CONFIG_CAMERA_SENSOR_ENABLED
+#include <camera.hpp>
+static LDM::Camera camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 12, 1);
 #endif
 
 #include <nvs.hpp>
 #include <sleep.hpp>
+#include <system.hpp>
 
 extern "C" {
 void app_main(void);
 }
 
-// static RTC_DATA_ATTR struct timeval sleep_enter_time;
+// initialize vector of sensors
+static std::vector<LDM::Sensor*> sensors {
+#if CONFIG_DHT_SENSOR_ENABLED
+    &dht,
+#endif
+#if CONFIG_BME680_SENSOR_ENABLED
+    &bme680,
+#endif
+#if CONFIG_CAMERA_SENSOR_ENABLED
+    &camera,
+#endif
+};
 
 void app_main(void) {
 
@@ -49,6 +62,40 @@ void app_main(void) {
     nvs.setKeyU8("broadcast", broadcast);
     nvs.commit();
     nvs.close();
+
+//     std::vector<LDM::Sensor*> sensors;
+// #if CONFIG_DHT_SENSOR_ENABLED
+//     sensors.push_back(&dht);
+// #endif
+// #if CONFIG_BME680_SENSOR_ENABLED
+//     sensors.push_back(&bme680);
+// #endif
+// #if CONFIG_CAMERA_SENSOR_ENABLED
+//     sensors.push_back(&camera);
+// #endif
+
+    // std::vector<uint8_t> sensors;
+    // sensors.push_back(123);
+
+//     LDM::Sensor *sensors[] = {
+// #if CONFIG_DHT_SENSOR_ENABLED
+//         &dht,
+// #endif
+// #if CONFIG_BME680_SENSOR_ENABLED
+//         &bme680,
+// #endif
+// #if CONFIG_CAMERA_SENSOR_ENABLED
+//         &camera,
+// #endif
+//     };
+
+    // sensors.at(0)->init();
+    LDM::System system;
+    // system.buildJson();
+
+    // const size_t num_sensors = (sizeof(sensors)/sizeof(*sensors));
+    // ESP_LOGI(APP_TAG, "Number of Sensors: %u", num_sensors);
+    // ESP_LOGI(APP_TAG, "Number of Sensors: %u", sensors.size());
 
 // #if CONFIG_PM_ENABLE
 //     // Configure dynamic frequency scaling:
@@ -68,20 +115,57 @@ void app_main(void) {
 //     ESP_ERROR_CHECK( esp_pm_configure(&pm_config) );
 // #endif // CONFIG_PM_ENABLE
 
-    // setup sensor to perform readings
-    xTaskCreate(sensor_task, "sensor_task", configMINIMAL_STACK_SIZE * 8, (void*)&sensor, 5, NULL);
+    // for(auto const& sensor : sensors) {
+    //     sensor->init();
+    //     sensor->readSensor();
+    // }
 
-    // setup broadcasting method
-// #ifndef CONFIG_IDF_TARGET_ESP32S2
-//     if(broadcast % 2 == 0) {
-//         xTaskCreate(http_task, "http_task", 8192, (void*)&sensor, 5, NULL);
-//     } else {
-//         xTaskCreate(ble_task, "ble_task", 8192*2, NULL, 5, NULL);
-//     }
-// #else
-    xTaskCreate(http_task, "http_task", 8192, (void*)&sensor, 5, NULL);
-// #endif
+    // cJSON *message = cJSON_CreateObject();
+    // for(auto const& sensor : sensors) {
+    //     cJSON *json_sensor = sensor->buildJson();
+    //     // cJSON_AddItemToObject(message, sensor->getSensorName(), json_sensor);
+    //
+    //     // printf("%s", sensor->getSensorName());
+    //
+    //     // char* output = cJSON_Print(json_sensor);
+    //     // if(output != NULL) {
+    //     //     printf("%s", output);
+    //     // } else {
+    //     //     printf("cJSON_Print output is NULL!\n");
+    //     // }
+    //     cJSON_AddItemToObject(message, "sensor", json_sensor);
+    // }
+
+    cJSON *message = cJSON_CreateObject();
+    dht.init();
+    dht.readSensor();
+    cJSON *sensor1 = dht.buildJson();
+    cJSON_AddItemToObject(message, dht.getSensorName(), sensor1);
+
+    camera.init();
+    camera.readSensor();
+    cJSON *sensor2 = camera.buildJson();
+    cJSON_AddItemToObject(message, camera.getSensorName(), sensor2);
+
+    char* output = cJSON_Print(message);
+    // printf("%s", output);
+
+    // // setup sensor to perform readings
+    // xTaskCreate(sensor_task, "sensor_task", configMINIMAL_STACK_SIZE * 8, (void*)&sensors, 5, NULL);
+
+//     // setup broadcasting method
+// // #ifndef CONFIG_IDF_TARGET_ESP32S2
+// //     if(broadcast % 2 == 0) {
+// //         xTaskCreate(http_task, "http_task", 8192, (void*)&sensor, 5, NULL);
+// //     } else {
+// //         xTaskCreate(ble_task, "ble_task", 8192*2, NULL, 5, NULL);
+// //     }
+// // #else
+    // xTaskCreate(http_task, "http_task", 5*8192, (void*)&sensors, 5, NULL);
+    xTaskCreate(http_task, "http_task", 8192, (void*)output, 5, NULL);
+    // xTaskCreate(http_task, "http_task", 8192, (void*)&sensors, 5, NULL);
+// // #endif
 
     // setup watcher for sleep
-    xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE * 3, (void*)&sensor, 5, NULL);
+    xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL);
 }
