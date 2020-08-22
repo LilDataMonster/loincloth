@@ -159,7 +159,7 @@ void app_main(void) {
     if(mode == BoardMode::setup) {
         ESP_LOGI(APP_TAG, "Board in setup mode");
     }
-    
+
     // printf("%s", output);
 
     // // setup sensor to perform readings

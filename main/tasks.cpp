@@ -20,6 +20,10 @@
 #include <cstring>
 #include <vector>
 
+
+#include <ble.hpp>
+static LDM::BLE ble("BLUFI_TEST");
+
 #include <uri_handles.hpp>
 
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
@@ -114,6 +118,11 @@ void http_task(void *pvParameters) {
     server.registerUriHandle(&uri_get);
     server.registerUriHandle(&uri_post);
 
+
+    ble.init();
+    ble.initBlufi();
+    ble.setupDefaultBlufiCallback();
+
     // create JSON message
     // cJSON *message = sensor->buildJson();
     // cJSON *message = sensors->at(0)->buildJson();
@@ -191,28 +200,28 @@ void sleep_task(void *pvParameters) {
 #ifndef CONFIG_IDF_TARGET_ESP32S2
 #define BLE_TASK_LOG "BLE_TASK"
 void ble_task(void *pvParameters) {
-    ESP_LOGI(BLE_TASK_LOG, "Starting BLE");
-
-    LDM::BLE ble("Nightgown");
-    ble.init();
-/*
-    ble.setupCallback();
-
-#if CONFIG_DHT11_SENSOR_ENABLED
-    // get sensor data
-    //LDM::DHT* dht_sensor = (LDM::DHT*)pvParameters;
-    LDM::DHT* p_dht_sensor = &dht_sensor;
-
-    uint8_t humidity = p_dht_sensor->getHumidity();
-    uint8_t temperature = p_dht_sensor->getTemperature();
-    ESP_LOGI(BLE_TASK_LOG, "Updating humidity: %d, temperature: %d", humidity, temperature);
-    ble.updateValue(humidity, temperature);
-#endif
-*/
-
-    // advertise BLE data for a while
-    vTaskDelay(pdMS_TO_TICKS(BLE_ADVERTISE_DURATION * 1E3));
-    ble.deinit();
+//     ESP_LOGI(BLE_TASK_LOG, "Starting BLE");
+//
+//     LDM::BLE ble("Nightgown");
+//     ble.init();
+// /*
+//     ble.setupCallback();
+//
+// #if CONFIG_DHT11_SENSOR_ENABLED
+//     // get sensor data
+//     //LDM::DHT* dht_sensor = (LDM::DHT*)pvParameters;
+//     LDM::DHT* p_dht_sensor = &dht_sensor;
+//
+//     uint8_t humidity = p_dht_sensor->getHumidity();
+//     uint8_t temperature = p_dht_sensor->getTemperature();
+//     ESP_LOGI(BLE_TASK_LOG, "Updating humidity: %d, temperature: %d", humidity, temperature);
+//     ble.updateValue(humidity, temperature);
+// #endif
+// */
+//
+//     // advertise BLE data for a while
+//     vTaskDelay(pdMS_TO_TICKS(BLE_ADVERTISE_DURATION * 1E3));
+//     ble.deinit();
     messageFinished = true;
     vTaskDelete(NULL);
 }
