@@ -11,6 +11,9 @@
 
 #define APP_TAG "LOINCLOTH"
 
+enum BoardMode { setup, sleep };
+static BoardMode mode = setup;
+
 #if CONFIG_DHT_SENSOR_ENABLED
 #include <dht.hpp>
 static LDM::DHT dht;
@@ -29,6 +32,7 @@ static LDM::Camera camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 12, 1);
 #include <nvs.hpp>
 #include <sleep.hpp>
 #include <system.hpp>
+#include <server.hpp>
 
 extern "C" {
 void app_main(void);
@@ -91,7 +95,6 @@ void app_main(void) {
 
     // sensors.at(0)->init();
     LDM::System system;
-    // system.buildJson();
 
     // const size_t num_sensors = (sizeof(sensors)/sizeof(*sensors));
     // ESP_LOGI(APP_TAG, "Number of Sensors: %u", num_sensors);
@@ -137,17 +140,26 @@ void app_main(void) {
     // }
 
     cJSON *message = cJSON_CreateObject();
+
+    cJSON *system_json = system.buildJson();
+    cJSON_AddItemToObject(message, APP_TAG, system_json);
+
     dht.init();
     dht.readSensor();
-    cJSON *sensor1 = dht.buildJson();
-    cJSON_AddItemToObject(message, dht.getSensorName(), sensor1);
+    cJSON *dht_json = dht.buildJson();
+    cJSON_AddItemToObject(message, dht.getSensorName(), dht_json);
 
     camera.init();
     camera.readSensor();
-    cJSON *sensor2 = camera.buildJson();
-    cJSON_AddItemToObject(message, camera.getSensorName(), sensor2);
+    cJSON *camera_json = camera.buildJson();
+    cJSON_AddItemToObject(message, camera.getSensorName(), camera_json);
 
     char* output = cJSON_Print(message);
+
+    if(mode == BoardMode::setup) {
+        ESP_LOGI(APP_TAG, "Board in setup mode");
+    }
+    
     // printf("%s", output);
 
     // // setup sensor to perform readings
@@ -166,6 +178,6 @@ void app_main(void) {
     // xTaskCreate(http_task, "http_task", 8192, (void*)&sensors, 5, NULL);
 // // #endif
 
-    // setup watcher for sleep
-    xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL);
+    // // setup watcher for sleep
+    // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL);
 }

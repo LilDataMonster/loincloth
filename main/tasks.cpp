@@ -13,11 +13,14 @@
 #include <wifi.hpp>
 #include <ble.hpp>
 #include <ota.hpp>
+#include <server.hpp>
 
 #include <sleep.hpp>
 #include <camera.hpp>
 #include <cstring>
 #include <vector>
+
+#include <uri_handles.hpp>
 
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
 #define BLE_ADVERTISE_DURATION CONFIG_BLE_ADVERTISE_DURATION
@@ -106,6 +109,11 @@ void http_task(void *pvParameters) {
     // }
     wifi.init_sta();
 
+    LDM::Server server("");
+    server.startServer();
+    server.registerUriHandle(&uri_get);
+    server.registerUriHandle(&uri_post);
+
     // create JSON message
     // cJSON *message = sensor->buildJson();
     // cJSON *message = sensors->at(0)->buildJson();
@@ -147,16 +155,19 @@ void http_task(void *pvParameters) {
     ota.checkUpdates(true);
 #endif
 
-    // // cleanup JSON message
-    // cJSON_Delete(message);
-    // message = NULL;
-
-    // vEventGroupDelete(s_wifi_event_group);
-    wifi.deinit_sta();
-    http.deinit();
-
-    messageFinished = true;
-    vTaskDelete(NULL);
+    while(1) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+    // // // cleanup JSON message
+    // // cJSON_Delete(message);
+    // // message = NULL;
+    //
+    // // vEventGroupDelete(s_wifi_event_group);
+    // wifi.deinit_sta();
+    // http.deinit();
+    //
+    // messageFinished = true;
+    // vTaskDelete(NULL);
 }
 
 #define SLEEP_TASK_LOG "SLEEP_TASK"
