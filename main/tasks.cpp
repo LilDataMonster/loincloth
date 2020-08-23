@@ -10,7 +10,7 @@
 #include <sensor.hpp>
 #include <http.hpp>
 #include <tasks.hpp>
-#include <wifi.hpp>
+// #include <wifi.hpp>
 #include <ble.hpp>
 #include <ota.hpp>
 #include <server.hpp>
@@ -89,7 +89,7 @@ void http_task(void *pvParameters) {
     }
 
     // setup wifi and http client
-    LDM::WiFi wifi;
+    // LDM::WiFi wifi;
     LDM::HTTP http(const_cast<char*>(HTTP_POST_ENDPOINT));
 
 #ifdef CONFIG_OTA_ENABLED
@@ -111,17 +111,18 @@ void http_task(void *pvParameters) {
     // for(auto const& sensor : *sensors) {
     //     sensor->readSensor();
     // }
-    wifi.init_sta();
+    // wifi.init();
+
+    ble.init();
+    ble.initBlufi();
+    ble.setupDefaultBlufiCallback();
+    
+    cJSON_Delete(ble.wifi.buildJson());
 
     LDM::Server server("");
     server.startServer();
     server.registerUriHandle(&uri_get);
     server.registerUriHandle(&uri_post);
-
-
-    ble.init();
-    ble.initBlufi();
-    ble.setupDefaultBlufiCallback();
 
     // create JSON message
     // cJSON *message = sensor->buildJson();
