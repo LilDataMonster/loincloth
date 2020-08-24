@@ -20,8 +20,11 @@
 #include <cstring>
 #include <vector>
 
-
+#include <led.hpp>
+#include <sensors.hpp>
 #include <ble.hpp>
+
+#include <driver/gpio.h>
 static LDM::BLE ble("BLUFI_TEST");
 
 #include <uri_handles.hpp>
@@ -32,33 +35,92 @@ static LDM::BLE ble("BLUFI_TEST");
 // sleep task will go to sleep when messageFinished is true
 static bool messageFinished = false;
 
+#define GPIO_OUTPUT_IO_0    14
+#define GPIO_OUTPUT_PIN_SEL  (1ULL<<GPIO_OUTPUT_IO_0)
+// #define GPIO_OUTPUT_IO_1    19
+// #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1))
+void led_on_off_task(void *pvParameters) {
+
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_DISABLE; //disable interrupt
+    io_conf.mode = GPIO_MODE_OUTPUT; //set as output mode
+    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL; //bit mask of the pins that you want to set,e.g.GPIO18/19
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; //disable pull-down mode
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE; //disable pull-up mode
+    gpio_config(&io_conf); //configure GPIO with the given settings
+
+    int32_t level = 0;
+    while(true) {
+        gpio_set_level(GPIO_NUM_14, level%2);
+        level += 1;
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+void led_fade_task(void *pvParameters) {
+    ledc_timer_config_t ledc_timer;
+    ledc_timer.duty_resolution = LEDC_TIMER_13_BIT; // resolution of PWM duty
+    ledc_timer.freq_hz = 5000;                      // frequency of PWM signal
+    ledc_timer.speed_mode = LEDC_LOW_SPEED_MODE;    // timer mode
+    ledc_timer.timer_num = LEDC_TIMER_1;            // timer index
+    ledc_timer.clk_cfg = LEDC_AUTO_CLK;             // Auto select the source clock
+
+    ledc_channel_config_t backlight;
+    backlight.channel    = LEDC_CHANNEL_0;
+    backlight.duty       = 0;
+    backlight.gpio_num   = 14;
+    backlight.speed_mode = LEDC_LOW_SPEED_MODE;
+    backlight.hpoint     = 0;
+    backlight.timer_sel  = LEDC_TIMER_1;
+
+    LDM::LED led;
+    led.configLedTimer(ledc_timer);
+    led.addLedChannelConfig(backlight);
+    led.init();
+
+    while(1) {
+        led.fadeLedWithTime(0);
+        vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
+
+        led.fadeLedWithTime(0, 0);
+        vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
+
+        led.setDuty(0, 3000);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        led.setDuty(0, 0);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+}
+
+
 #define SENSOR_TASK_LOG "SENSOR_TASK"
 void sensor_task(void *pvParameters) {
 // void sensor_task(std::vector<LDM::Sensor>& sensors) {
 
-    if(pvParameters == NULL) {
-        ESP_LOGE(SENSOR_TASK_LOG, "Invalid Sensor Recieved");
-        return;
-    }
-
-    std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
-
-    for(auto const& sensor : *sensors) {
-        if(sensor->init() != ESP_OK) {
-            ESP_LOGE(SENSOR_TASK_LOG, "Failed to initialize sensor");
-            return;
-        }
-    }
-
-    while(true){
-        for(auto const& sensor : *sensors) {
-            sensor->readSensor();
-        }
-        // If you read the sensor data too often, it will heat up
-        // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
-        // vTaskDelay(2000 / portTICK_PERIOD_MS);
-        vTaskDelay(pdMS_TO_TICKS(10000));
-    }
+    // if(pvParameters == NULL) {
+    //     ESP_LOGE(SENSOR_TASK_LOG, "Invalid Sensor Recieved");
+    //     return;
+    // }
+    //
+    // std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
+    //
+    // for(auto const& sensor : *sensors) {
+    //     if(sensor->init() != ESP_OK) {
+    //         ESP_LOGE(SENSOR_TASK_LOG, "Failed to initialize sensor");
+    //         return;
+    //     }
+    // }
+    //
+    // while(true){
+    //     for(auto const& sensor : *sensors) {
+    //         sensor->readSensor();
+    //     }
+    //     // If you read the sensor data too often, it will heat up
+    //     // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
+    //     // vTaskDelay(2000 / portTICK_PERIOD_MS);
+    //     vTaskDelay(pdMS_TO_TICKS(10000));
+    // }
 }
 
 #define HTTP_POST_ENDPOINT CONFIG_ESP_POST_ENDPOINT
@@ -67,22 +129,6 @@ void sensor_task(void *pvParameters) {
 //#define GPIO_OUTPUT_PIN_SEL  (1ULL << GPIO_OUTPUT_PIN)
 #define FIRMWARE_UPGRADE_ENDPOINT CONFIG_FIRMWARE_UPGRADE_ENDPOINT
 void http_task(void *pvParameters) {
-    // gpio_config_t io_conf;
-    // //disable interrupt
-    // io_conf.intr_type = GPIO_PIN_INTR_DISABLE;
-    // //set as output mode
-    // io_conf.mode = GPIO_MODE_OUTPUT;
-    // //bit mask of the pins that you want to set,e.g.GPIO18/19
-    // io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    // //disable pull-down mode
-    // io_conf.pull_down_en = 0;
-    // //disable pull-up mode
-    // io_conf.pull_up_en = 0;
-    // //configure GPIO with the given settings
-    // gpio_config(&io_conf);
-    //
-    // gpio_set_level(GPIO_OUTPUT_PIN, 1);
-
     if(pvParameters == NULL) {
         ESP_LOGE(HTTP_TASK_LOG, "Invalid Sensor Recieved");
         return;
@@ -102,6 +148,7 @@ void http_task(void *pvParameters) {
 
     char* post_data = (char*)pvParameters;
     ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
+    free(post_data);
 
     // sensors->at(0)->init();
     // sensors->at(0)->readSensor();
@@ -116,13 +163,16 @@ void http_task(void *pvParameters) {
     ble.init();
     ble.initBlufi();
     ble.setupDefaultBlufiCallback();
-    
+
     cJSON_Delete(ble.wifi.buildJson());
 
     LDM::Server server("");
     server.startServer();
     server.registerUriHandle(&uri_get);
     server.registerUriHandle(&uri_post);
+    server.registerUriHandle(&uri_data);
+    server.registerUriHandle(&uri_camera);
+    server.registerUriHandle(&uri_stream);
 
     // create JSON message
     // cJSON *message = sensor->buildJson();

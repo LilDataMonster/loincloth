@@ -14,42 +14,15 @@
 enum BoardMode { setup, sleep };
 static BoardMode mode = setup;
 
-#if CONFIG_DHT_SENSOR_ENABLED
-#include <dht.hpp>
-static LDM::DHT dht;
-#endif
-
-#if CONFIG_BME680_SENSOR_ENABLED
-#include <bme680.hpp>
-static LDM::BME680 bme680;
-#endif
-
-#if CONFIG_CAMERA_SENSOR_ENABLED
-#include <camera.hpp>
-static LDM::Camera camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 12, 1);
-#endif
-
 #include <nvs.hpp>
 #include <sleep.hpp>
 #include <system.hpp>
 #include <server.hpp>
+#include <sensors.hpp>
 
 extern "C" {
 void app_main(void);
 }
-
-// initialize vector of sensors
-static std::vector<LDM::Sensor*> sensors {
-#if CONFIG_DHT_SENSOR_ENABLED
-    &dht,
-#endif
-#if CONFIG_BME680_SENSOR_ENABLED
-    &bme680,
-#endif
-#if CONFIG_CAMERA_SENSOR_ENABLED
-    &camera,
-#endif
-};
 
 void app_main(void) {
 
@@ -71,26 +44,28 @@ void app_main(void) {
     LDM::System system;
     cJSON *system_json = system.buildJson();
 
-    cJSON *message = cJSON_CreateObject();
-    cJSON_AddItemToObject(message, APP_TAG, system_json);
+    json_data = cJSON_CreateObject();
+    cJSON_AddItemToObject(json_data, APP_TAG, system_json);
 
     dht.init();
     dht.readSensor();
     cJSON *dht_json = dht.buildJson();
-    cJSON_AddItemToObject(message, dht.getSensorName(), dht_json);
+    cJSON_AddItemToObject(json_data, dht.getSensorName(), dht_json);
 
     camera.init();
     camera.readSensor();
     cJSON *camera_json = camera.buildJson();
-    cJSON_AddItemToObject(message, camera.getSensorName(), camera_json);
+    cJSON_AddItemToObject(json_data, camera.getSensorName(), camera_json);
+    camera.releaseData();
 
-    char* output = cJSON_Print(message);
+    char* output = cJSON_Print(json_data);
 
     if(mode == BoardMode::setup) {
         ESP_LOGI(APP_TAG, "Board in setup mode");
     }
 
     xTaskCreate(http_task, "http_task", 8192, (void*)output, 5, NULL);
+    xTaskCreate(led_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 
     // // setup watcher for sleep
     // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL);
