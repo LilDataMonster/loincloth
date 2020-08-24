@@ -65,7 +65,7 @@ void app_main(void) {
     }
 
     xTaskCreate(http_task, "http_task", 8192, (void*)output, 5, NULL);
-    xTaskCreate(led_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+    xTaskCreate(led_fade_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);
 
     // // setup watcher for sleep
     // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL);
