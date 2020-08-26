@@ -23,10 +23,9 @@
 #include <led.hpp>
 #include <sensors.hpp>
 #include <ble.hpp>
+#include <system.hpp>
 
 #include <driver/gpio.h>
-static LDM::BLE ble("BLUFI_TEST");
-
 #include <uri_handles.hpp>
 
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
@@ -34,6 +33,10 @@ static LDM::BLE ble("BLUFI_TEST");
 
 // sleep task will go to sleep when messageFinished is true
 static bool messageFinished = false;
+
+uint16_t led_fade_time = 3000;
+uint16_t led_duty = 4000;
+int32_t led_on = 0;
 
 #define GPIO_OUTPUT_IO_0    14
 #define GPIO_OUTPUT_PIN_SEL  (1ULL<<GPIO_OUTPUT_IO_0)
@@ -49,10 +52,11 @@ void led_on_off_task(void *pvParameters) {
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE; //disable pull-up mode
     gpio_config(&io_conf); //configure GPIO with the given settings
 
-    int32_t level = 0;
+    // int32_t level = 0;
     while(true) {
-        gpio_set_level(GPIO_NUM_14, level%2);
-        level += 1;
+        gpio_set_level(GPIO_NUM_14, led_on%2);
+        ESP_LOGI("LED ON_OFF", "LED Value: %d", led_on%2);
+        // level += 1;
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -80,12 +84,12 @@ void led_fade_task(void *pvParameters) {
 
     while(1) {
         led.fadeLedWithTime(0);
-        vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
+        vTaskDelay(led_fade_time / portTICK_PERIOD_MS);
 
         led.fadeLedWithTime(0, 0);
-        vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
+        vTaskDelay(led_fade_time / portTICK_PERIOD_MS);
 
-        led.setDuty(0, 3000);
+        led.setDuty(0, led_duty);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
         led.setDuty(0, 0);
@@ -160,20 +164,38 @@ void http_task(void *pvParameters) {
     // }
     // wifi.init();
 
-    ble.init();
-    ble.initBlufi();
-    ble.setupDefaultBlufiCallback();
+    LDM::BLE ble_dev("BLUFI_TEST");
+    ble_dev.init();
+    ble_dev.initBlufi();
+    ble_dev.setupDefaultBlufiCallback();
+    g_ble = &ble_dev;
 
-    cJSON_Delete(ble.wifi.buildJson());
+    // cJSON_Delete(g_ble->wifi.buildJson());
 
     LDM::Server server("");
+    httpd_config_t * server_config = server.getConfig();
+    server_config->send_wait_timeout = 20;
+
     server.startServer();
     server.registerUriHandle(&uri_get);
     server.registerUriHandle(&uri_post);
     server.registerUriHandle(&uri_data);
-    server.registerUriHandle(&uri_camera);
-    server.registerUriHandle(&uri_stream);
+    server.registerUriHandle(&uri_get_camera);
+    server.registerUriHandle(&uri_post_camera);
+    server.registerUriHandle(&uri_get_stream);
+    server.registerUriHandle(&uri_post_led);
 
+    g_http_server = &server;
+
+    // LDM::System loc_system;
+    // g_system = &loc_system;
+    //
+    // cJSON *system_json = g_system->buildJson();
+    // cJSON_AddItemToObject(json_data, "LoinCloth", system_json);
+
+    // char* output = cJSON_Print(json_data);
+    // ESP_LOGI(HTTP_TASK_LOG, "%s", output);
+    // free(output);
     // create JSON message
     // cJSON *message = sensor->buildJson();
     // cJSON *message = sensors->at(0)->buildJson();

@@ -3,35 +3,37 @@
 
 #include <vector>
 #include <cJSON.h>
+#include <ble.hpp>
+#include <server.hpp>
+#include <system.hpp>
 
+
+// probably should avoid to use extern
 #if CONFIG_DHT_SENSOR_ENABLED
 #include <dht.hpp>
-static LDM::DHT dht;
+extern LDM::DHT dht;
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
 #include <bme680.hpp>
-static LDM::BME680 bme680;
+extern LDM::BME680 bme680;
 #endif
 
 #if CONFIG_CAMERA_SENSOR_ENABLED
 #include <camera.hpp>
-static LDM::Camera camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 30, 1);
+extern LDM::Camera camera;
 #endif
 
 // initialize vector of sensors
-static std::vector<LDM::Sensor*> sensors {
-#if CONFIG_DHT_SENSOR_ENABLED
-    &dht,
-#endif
-#if CONFIG_BME680_SENSOR_ENABLED
-    &bme680,
-#endif
-#if CONFIG_CAMERA_SENSOR_ENABLED
-    &camera,
-#endif
-};
+extern std::vector<LDM::Sensor*> sensors;
 
-static cJSON * json_data = NULL;
+extern cJSON * json_data;
+extern LDM::BLE *g_ble;
+extern LDM::Server *g_http_server;
+extern LDM::System *g_system;
+
+extern uint16_t led_fade_time;
+extern uint16_t led_duty;
+extern int32_t led_on;
 
 #endif
