@@ -16,6 +16,10 @@
 
 rest_server_context_t *rest_context = (rest_server_context_t*)calloc(1, sizeof(rest_server_context_t));
 
+int32_t led_on = 0;
+uint32_t led_period_ms = 10000;
+bool is_period_enabled = false;
+
 typedef struct {
     httpd_req_t *req;
     size_t len;
@@ -54,7 +58,6 @@ esp_err_t post_handler(httpd_req_t *req) {
 
 // Data Post URI
 esp_err_t data_post_handler(httpd_req_t *req) {
-    ESP_LOGI(TAG, "In DATA POST fn");
     int total_len = req->content_len;
     int cur_len = 0;
     char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
@@ -463,9 +466,8 @@ httpd_uri_t uri_get_stream = {
    .user_ctx = NULL
 };
 
-// led Post URI
+// LED Post URI
 esp_err_t led_post_handler(httpd_req_t *req) {
-    ESP_LOGI(TAG, "In DATA POST fn");
     int total_len = req->content_len;
     int cur_len = 0;
     char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
@@ -491,21 +493,35 @@ esp_err_t led_post_handler(httpd_req_t *req) {
     if(duty_json) {
         led_duty = duty_json->valueint;
     } else {
-        ESP_LOGI(TAG, "Duty value not found");
+        ESP_LOGI(TAG, "duty value not found");
     }
     cJSON *fade_json = cJSON_GetObjectItem(root, "fade");
     if(fade_json) {
         led_fade_time = fade_json->valueint;
     } else {
-        ESP_LOGI(TAG, "Fade value not found");
+        ESP_LOGI(TAG, "fade value not found");
     }
     cJSON *on_json = cJSON_GetObjectItem(root, "on");
-    if(fade_json) {
+    if(on_json) {
         led_on = on_json->valueint;
     } else {
-        ESP_LOGI(TAG, "On value not found");
+        ESP_LOGI(TAG, "on value not found");
     }
-    ESP_LOGI(TAG, "LED control: duty = %d, fade = %d, on = %d", led_duty, led_fade_time, led_on);
+    cJSON *period_json = cJSON_GetObjectItem(root, "period");
+    if(period_json) {
+        led_period_ms = period_json->valueint;
+    } else {
+        ESP_LOGI(TAG, "period value not found");
+    }
+    cJSON *period_en_json = cJSON_GetObjectItem(root, "period_enabled");
+    if(period_en_json) {
+        is_period_enabled = cJSON_IsTrue(period_en_json) ? true : false;
+    } else {
+        ESP_LOGI(TAG, "period_enabled value not found");
+    }
+
+    ESP_LOGI(TAG, "LED control: duty = %d, fade = %d, on = %d, period = %u, period_enabled = %s",
+              led_duty, led_fade_time, led_on, led_period_ms, (is_period_enabled ? "True":"False"));
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "LED values updated successfully");
     return ESP_OK;
@@ -517,3 +533,11 @@ httpd_uri_t uri_post_led = {
    .handler  = led_post_handler,
    .user_ctx = rest_context
 };
+
+// httpd_uri_t uri_options_led = {
+//    .uri      = "/led",
+//    .method   = HTTP_OPTIONS,
+//    // .handler  = camera_options_handler,
+//    .handler  = led_post_handler,
+//    .user_ctx = rest_context
+// };

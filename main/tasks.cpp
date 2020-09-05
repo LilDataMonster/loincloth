@@ -38,7 +38,7 @@ static bool messageFinished = false;
 
 uint16_t led_fade_time = 3000;
 uint16_t led_duty = 4000;
-int32_t led_on = 0;
+// int32_t led_on = 0;
 
 #define LED_GPIO GPIO_NUM_4
 #define GPIO_OUTPUT_IO_0    LED_GPIO
@@ -58,9 +58,12 @@ void led_on_off_task(void *pvParameters) {
     // int32_t level = 0;
     while(true) {
         gpio_set_level(LED_GPIO, led_on%2);
-        ESP_LOGI("LED ON_OFF", "LED Value: %d", led_on%2);
-        led_on += 1;
-        vTaskDelay(pdMS_TO_TICKS(10000));
+        ESP_LOGI("LDM:LED", "LED: %d, Period Enabled: %s, Period: %u ms",
+                  led_on%2, (is_period_enabled?"True":"False"), led_period_ms);
+        // led_on += 1;
+        // vTaskDelay(pdMS_TO_TICKS(10000));
+        led_on += is_period_enabled ? 1 : 0;
+        vTaskDelay(pdMS_TO_TICKS(led_period_ms));
     }
 }
 

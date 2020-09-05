@@ -30,4 +30,7 @@ extern httpd_uri_t uri_get_stream;
 esp_err_t led_post_handler(httpd_req_t *req);
 extern httpd_uri_t uri_post_led;
 
+extern int32_t led_on;
+extern uint32_t led_period_ms;
+extern bool is_period_enabled;
 #endif
