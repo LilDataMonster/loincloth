@@ -31,6 +31,8 @@
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
 #define BLE_ADVERTISE_DURATION CONFIG_BLE_ADVERTISE_DURATION
 
+cJSON* json_data = NULL;
+
 // sleep task will go to sleep when messageFinished is true
 static bool messageFinished = false;
 
@@ -38,7 +40,8 @@ uint16_t led_fade_time = 3000;
 uint16_t led_duty = 4000;
 int32_t led_on = 0;
 
-#define GPIO_OUTPUT_IO_0    14
+#define LED_GPIO GPIO_NUM_4
+#define GPIO_OUTPUT_IO_0    LED_GPIO
 #define GPIO_OUTPUT_PIN_SEL  (1ULL<<GPIO_OUTPUT_IO_0)
 // #define GPIO_OUTPUT_IO_1    19
 // #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1))
@@ -54,10 +57,10 @@ void led_on_off_task(void *pvParameters) {
 
     // int32_t level = 0;
     while(true) {
-        gpio_set_level(GPIO_NUM_14, led_on%2);
+        gpio_set_level(LED_GPIO, led_on%2);
         ESP_LOGI("LED ON_OFF", "LED Value: %d", led_on%2);
-        // level += 1;
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        led_on += 1;
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }
 
@@ -102,6 +105,37 @@ void led_fade_task(void *pvParameters) {
 void sensor_task(void *pvParameters) {
 // void sensor_task(std::vector<LDM::Sensor>& sensors) {
 
+    std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
+
+    for(auto const& sensor : *sensors) {
+        ESP_LOGI(SENSOR_TASK_LOG, "Initializing Sensor: %s", sensor->getSensorName());
+        sensor->init();
+    }
+
+    while(true){
+        if(json_data != NULL) {
+            cJSON_Delete(json_data);
+            json_data = NULL;
+        }
+        json_data = cJSON_CreateObject();
+        for(auto const& sensor : *sensors) {
+            ESP_LOGI(SENSOR_TASK_LOG, "Reading Sensor: %s", sensor->getSensorName());
+            sensor->readSensor();
+            cJSON *sensor_json = sensor->buildJson();
+            cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
+            sensor->releaseData();
+
+            // char* sensor_out = cJSON_Print(sensor_json);
+            // printf("%s\n", sensor_out);
+            // free(sensor_out);
+        }
+
+        // If you read the sensor data too often, it will heat up
+        // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
+        // vTaskDelay(2000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(30000));
+    }
+
     // if(pvParameters == NULL) {
     //     ESP_LOGE(SENSOR_TASK_LOG, "Invalid Sensor Recieved");
     //     return;
@@ -133,10 +167,10 @@ void sensor_task(void *pvParameters) {
 //#define GPIO_OUTPUT_PIN_SEL  (1ULL << GPIO_OUTPUT_PIN)
 #define FIRMWARE_UPGRADE_ENDPOINT CONFIG_FIRMWARE_UPGRADE_ENDPOINT
 void http_task(void *pvParameters) {
-    if(pvParameters == NULL) {
-        ESP_LOGE(HTTP_TASK_LOG, "Invalid Sensor Recieved");
-        return;
-    }
+    // if(pvParameters == NULL) {
+    //     ESP_LOGE(HTTP_TASK_LOG, "Invalid Sensor Recieved");
+    //     return;
+    // }
 
     // setup wifi and http client
     // LDM::WiFi wifi;
@@ -147,107 +181,36 @@ void http_task(void *pvParameters) {
     LDM::OTA ota(const_cast<char*>(FIRMWARE_UPGRADE_ENDPOINT));
 #endif
 
-    // // LDM::Sensor *sensor = (LDM::Sensor*)pvParameters;
-    // std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
+    while(true) {
+        if(g_ble->wifi.isConnected()) {
+            if(json_data != NULL) {
+                // char* post_data = cJSON_Print(json_data);
+                // ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
 
-    char* post_data = (char*)pvParameters;
-    ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
-    free(post_data);
-
-    // sensors->at(0)->init();
-    // sensors->at(0)->readSensor();
-    // cJSON *message = sensors->at(0)->buildJson();
-    // char* output = cJSON_Print(message);
-    // printf("%s", output);
-    // for(auto const& sensor : *sensors) {
-    //     sensor->readSensor();
-    // }
-    // wifi.init();
-
-    LDM::BLE ble_dev("BLUFI_TEST");
-    ble_dev.init();
-    ble_dev.initBlufi();
-    ble_dev.setupDefaultBlufiCallback();
-    g_ble = &ble_dev;
-
-    // cJSON_Delete(g_ble->wifi.buildJson());
-
-    LDM::Server server("");
-    httpd_config_t * server_config = server.getConfig();
-    server_config->send_wait_timeout = 20;
-
-    server.startServer();
-    server.registerUriHandle(&uri_get);
-    server.registerUriHandle(&uri_post);
-    server.registerUriHandle(&uri_data);
-    server.registerUriHandle(&uri_get_camera);
-    server.registerUriHandle(&uri_post_camera);
-    server.registerUriHandle(&uri_get_stream);
-    server.registerUriHandle(&uri_post_led);
-
-    g_http_server = &server;
-
-    // LDM::System loc_system;
-    // g_system = &loc_system;
-    //
-    // cJSON *system_json = g_system->buildJson();
-    // cJSON_AddItemToObject(json_data, "LoinCloth", system_json);
-
-    // char* output = cJSON_Print(json_data);
-    // ESP_LOGI(HTTP_TASK_LOG, "%s", output);
-    // free(output);
-    // create JSON message
-    // cJSON *message = sensor->buildJson();
-    // cJSON *message = sensors->at(0)->buildJson();
-    //
-    // if(message != NULL) {
-    //     char* output = cJSON_Print(message);
-    //     printf("%s", output);
-    // }
-
-    // cJSON *message = cJSON_CreateObject();
-    // for(auto const& sensor : *sensors) {
-    //     printf("Building Sensor JSON\n");
-    //     cJSON *json_sensor = sensor->buildJson();
-    // }
-    // for(auto const& sensor : *sensors) {
-    //     cJSON *json_sensor = sensor->buildJson();
-    //     // cJSON_AddItemToObject(message, sensor->getSensorName(), json_sensor);
-    //
-    //     // printf("%s", sensor->getSensorName());
-    //
-    //     char* output = cJSON_Print(json_sensor);
-    //     if(output != NULL) {
-    //         printf("%s", output);
-    //     } else {
-    //         printf("cJSON_Print output is NULL!\n");
-    //     }
-    //     cJSON_AddItemToObject(message, "sensor", json_sensor);
-    // }
-
-    // char* output = cJSON_Print(message);
-    // printf("%s", output);
-
-    // POST
-    // http.postJSON(message);
-    http.postFormattedJSON(post_data);
-
+                // // POST
+                http.postJSON(json_data);
+                // http.postFormattedJSON(post_data);
+                // free(post_data);
+            } else {
+                ESP_LOGI(HTTP_TASK_LOG, "SENSOR_JSON value is NULL");
+            }
 #ifdef CONFIG_OTA_ENABLED
-    // check OTA updates
-    ota.checkUpdates(true);
+            // check OTA updates
+            ota.checkUpdates(true);
 #endif
-
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        } else {
+            ESP_LOGI(HTTP_TASK_LOG, "Wifi is not connected");
+        }
+        vTaskDelay(pdMS_TO_TICKS(30000));
     }
     // // // cleanup JSON message
     // // cJSON_Delete(message);
     // // message = NULL;
-    //
-    // // vEventGroupDelete(s_wifi_event_group);
+
+    // vEventGroupDelete(s_wifi_event_group);
     // wifi.deinit_sta();
-    // http.deinit();
-    //
+    http.deinit();
+
     // messageFinished = true;
     // vTaskDelete(NULL);
 }
@@ -266,9 +229,20 @@ void sleep_task(void *pvParameters) {
             // enter deep sleep
             LDM::Sleep::enterDeepSleepSec(SLEEP_DURATION);
         }
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(30000));
     }
 }
+
+// void blufi_task(void *pvParameters) {
+//     LDM::BLE ble_dev(const_cast<char*>("BLUFI_TEST"));
+//     ble_dev.init();
+//     ble_dev.setupDefaultBlufiCallback();
+//     ble_dev.initBlufi();
+//     g_ble = &ble_dev;
+//     while(true) {
+//         vTaskDelay(pdMS_TO_TICKS(1000));
+//     }
+// }
 
 #ifndef CONFIG_IDF_TARGET_ESP32S2
 #define BLE_TASK_LOG "BLE_TASK"

@@ -1,3 +1,5 @@
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 #include <cJSON.h>
 #include <esp_log.h>
 #include <camera.hpp>
@@ -57,6 +59,27 @@ esp_err_t data_post_handler(httpd_req_t *req) {
     int cur_len = 0;
     char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
     int received = 0;
+
+    esp_err_t err;
+    // size_t buf_len = httpd_req_get_url_query_len(req);
+    // char* buffer = (char*)malloc(buf_len);
+    // err = httpd_req_get_url_query_str(req, buffer, buf_len);
+    // if(err != ESP_OK) {
+    //     ESP_LOGE(TAG, "Error getting query string");
+    //     return err;
+    // }
+
+    const char* field = "Content-Type";
+    size_t buf_len = httpd_req_get_hdr_value_len(req, field);
+    char* buffer = (char*)malloc(buf_len);
+    err = httpd_req_get_hdr_value_str(req, field, buffer, buf_len);
+    if(err != ESP_OK) {
+        ESP_LOGE(TAG, "Error getting query string: %s", esp_err_to_name(err));
+        return err;
+    }
+
+    ESP_LOGI(TAG, "URL QUERY STRING: %s", buffer);
+
     if (total_len >= SCRATCH_BUFSIZE) {
         /* Respond with 500 Internal Server Error */
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
@@ -229,6 +252,7 @@ esp_err_t camera_post_handler(httpd_req_t *req) {
     GET_INT_VAL(gain_ctrl_json, root, gain_ctrl, set_gain_ctrl);
     GET_INT_VAL(exposure_ctrl_json, root, exposure_ctrl, set_exposure_ctrl);
     GET_INT_VAL(hmirror_json, root, hmirror, set_hmirror);
+    GET_INT_VAL(sharpness_json, root, sharpness, set_sharpness);
     GET_INT_VAL(vflip_json, root, vflip, set_vflip);
     GET_INT_VAL(awb_gain_json, root, awb_gain, set_awb_gain);
     GET_INT_VAL(agc_gain_json, root, agc_gain, set_agc_gain);
@@ -256,6 +280,101 @@ esp_err_t camera_post_handler(httpd_req_t *req) {
 httpd_uri_t uri_post_camera = {
    .uri      = "/camera",
    .method   = HTTP_POST,
+   .handler  = camera_post_handler,
+   .user_ctx = rest_context
+};
+
+esp_err_t camera_options_handler(httpd_req_t *req) {
+    esp_err_t err = ESP_OK;
+
+    char*  buf;
+    size_t buf_len;
+
+    /* Get header value string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
+    if (buf_len > 1) {
+        buf = (char*)malloc(buf_len);
+        /* Copy null terminated value string into buffer */
+        if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found header => Host: %s", buf);
+        }
+        free(buf);
+    }
+
+    buf_len = httpd_req_get_hdr_value_len(req, "Content-Type") + 1;
+    if (buf_len > 1) {
+        buf = (char*)malloc(buf_len);
+        if (httpd_req_get_hdr_value_str(req, "Content-Type", buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found header => Content-Type: %s", buf);
+        }
+        free(buf);
+    }
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1) {
+        buf = (char*)malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found URL query => %s", buf);
+            char param[32];
+            /* Get value of expected key from query string */
+            if (httpd_query_key_value(buf, "query1", param, sizeof(param)) == ESP_OK) {
+                ESP_LOGI(TAG, "Found URL query parameter => query1=%s", param);
+            }
+            if (httpd_query_key_value(buf, "query3", param, sizeof(param)) == ESP_OK) {
+                ESP_LOGI(TAG, "Found URL query parameter => query3=%s", param);
+            }
+            if (httpd_query_key_value(buf, "query2", param, sizeof(param)) == ESP_OK) {
+                ESP_LOGI(TAG, "Found URL query parameter => query2=%s", param);
+            }
+        }
+        free(buf);
+    }
+
+    err = httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+    // Access-Control-Allow-Origin
+    // int total_len = req->content_len;
+    // int cur_len = 0;
+    // char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+    // int received = 0;
+    // if (total_len >= SCRATCH_BUFSIZE) {
+    //     /* Respond with 500 Internal Server Error */
+    //     httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+    //     return ESP_FAIL;
+    // }
+    // while (cur_len < total_len) {
+    //     received = httpd_req_recv(req, buf + cur_len, total_len);
+    //     if (received <= 0) {
+    //         /* Respond with 500 Internal Server Error */
+    //         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+    //         return ESP_FAIL;
+    //     }
+    //     cur_len += received;
+    // }
+    // buf[total_len] = '\0';
+    //
+    // printf("Data: %s\n", buf);
+    //
+    // const char* field = "Content-Type";
+    // size_t buf_len = httpd_req_get_hdr_value_len(req, field);
+    // char* buffer = (char*)malloc(buf_len);
+    // err = httpd_req_get_hdr_value_str(req, field, buffer, buf_len);
+    // if(err != ESP_OK) {
+    //     ESP_LOGE(TAG, "Error getting query string: %s", esp_err_to_name(err));
+    //     return err;
+    // }
+    //
+    // ESP_LOGI(TAG, "URL QUERY STRING: %s", buffer);
+
+    return err;
+}
+// methods: https://github.com/espressif/esp-idf/blob/master/components/nghttp/port/include/http_parser.h
+httpd_uri_t uri_options_camera = {
+   .uri      = "/camera",
+   .method   = HTTP_OPTIONS,
+   // .handler  = camera_options_handler,
    .handler  = camera_post_handler,
    .user_ctx = rest_context
 };
@@ -319,6 +438,7 @@ esp_err_t jpg_get_stream_handler(httpd_req_t *req) {
         //     free(_jpg_buf);
         // }
         // esp_camera_fb_return(fb);
+        camera.releaseData();
         if(res != ESP_OK){
             break;
         }
@@ -329,6 +449,7 @@ esp_err_t jpg_get_stream_handler(httpd_req_t *req) {
         ESP_LOGI(TAG, "MJPG: %uKB %ums (%.1ffps)",
             (uint32_t)(_jpg_buf_len/1024),
             (uint32_t)frame_time, 1000.0 / (uint32_t)frame_time);
+        vTaskDelay(pdMS_TO_TICKS(30));
     }
 
     last_frame = 0;
