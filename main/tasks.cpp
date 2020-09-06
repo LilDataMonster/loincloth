@@ -168,14 +168,37 @@ void sensor_task(void *pvParameters) {
 //#define GPIO_OUTPUT_PIN_SEL  (1ULL << GPIO_OUTPUT_PIN)
 #define FIRMWARE_UPGRADE_ENDPOINT CONFIG_FIRMWARE_UPGRADE_ENDPOINT
 void http_task(void *pvParameters) {
-    // if(pvParameters == NULL) {
-    //     ESP_LOGE(HTTP_TASK_LOG, "Invalid Sensor Recieved");
-    //     return;
-    // }
 
-    // setup wifi and http client
-    // LDM::WiFi wifi;
-    LDM::HTTP_Client http(const_cast<char*>(HTTP_POST_ENDPOINT));
+    // setup http client
+    char* endpoint_url = NULL;
+    size_t endpoint_url_size = 0;
+
+    // check key and get url size if it exists
+    if(g_nvs != NULL) {
+        g_nvs->openNamespace("url");
+        esp_err_t err = g_nvs->getKeyStr("post", NULL, &endpoint_url_size);
+        if(err != ESP_OK) {
+            endpoint_url = const_cast<char*>(HTTP_POST_ENDPOINT);
+            if(err == ESP_ERR_NVS_NOT_FOUND) {
+                ESP_LOGI(HTTP_TASK_LOG, "No Post URL found in NVS, setting to default: %s", endpoint_url);
+            }
+        } else {
+            endpoint_url = (char*)malloc(endpoint_url_size);
+            err = g_nvs->getKeyStr("post", endpoint_url, &endpoint_url_size);
+            if(err != ESP_OK) {
+                free(endpoint_url);
+                endpoint_url = const_cast<char*>(HTTP_POST_ENDPOINT);
+                ESP_LOGI(HTTP_TASK_LOG, "Error fetching Post URL from NVS, setting to default: %s", endpoint_url);
+            }
+        }
+        g_nvs->close();
+    } else {
+        endpoint_url = const_cast<char*>(HTTP_POST_ENDPOINT);
+        ESP_LOGI(HTTP_TASK_LOG, "No NVS found when fetching Post URL from NVS, setting to default: %s", endpoint_url);
+    }
+
+    LDM::HTTP_Client http(endpoint_url);
+    g_http_client = &http;
 
 #ifdef CONFIG_OTA_ENABLED
     // setup ota updater and checkUpdates

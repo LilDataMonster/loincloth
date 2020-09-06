@@ -245,6 +245,7 @@ esp_err_t config_post_handler(httpd_req_t *req) {
 
     cJSON *root = cJSON_Parse(buf);
 
+    // configure camera
     cJSON *camera_json = cJSON_GetObjectItemCaseSensitive(root, "camera");
     if(cJSON_IsObject(camera_json)) {
         // framesize [0-10]
@@ -277,6 +278,7 @@ esp_err_t config_post_handler(httpd_req_t *req) {
         ESP_LOGI(TAG, "Camera Configuration Not Found");
     }
 
+    // configure led
     cJSON *led_json = cJSON_GetObjectItemCaseSensitive(root, "led");
     if(cJSON_IsObject(led_json)) {
         cJSON *duty_json = cJSON_GetObjectItemCaseSensitive(led_json, "duty");
@@ -323,6 +325,36 @@ esp_err_t config_post_handler(httpd_req_t *req) {
         }
     } else {
         ESP_LOGI(TAG, "LED Configuration Not Found");
+    }
+
+    // configure url
+    cJSON *report_json = cJSON_GetObjectItemCaseSensitive(root, "report");
+    if(cJSON_IsObject(report_json)) {
+        cJSON *post_url_json = cJSON_GetObjectItemCaseSensitive(report_json, "post_url");
+        if(cJSON_IsString(post_url_json) && (post_url_json->valuestring != NULL)) {
+            // set new URL
+            g_http_client->setURL(post_url_json->valuestring);
+
+            // update url in NVS
+            if(g_nvs != NULL) {
+                g_nvs->openNamespace("url");
+                esp_err_t err = g_nvs->setKeyStr("post", const_cast<char*>(g_http_client->getURL()));
+                if(err != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to update NVS with new url::post string: %s", g_http_client->getURL());
+                } else {
+                    g_nvs->commit();
+                }
+                g_nvs->close();
+            } else {
+                ESP_LOGI(TAG, "No NVS found when updating Post URL: %s", g_http_client->getURL());
+            }
+
+            ESP_LOGI(TAG, "Report URL Post value set: %s", post_url_json->valuestring);
+        } else {
+            ESP_LOGI(TAG, "post_url value not found");
+        }
+    } else {
+        ESP_LOGI(TAG, "Report URL Configuration Not Found");
     }
 
     cJSON_Delete(root);

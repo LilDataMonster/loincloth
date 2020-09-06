@@ -19,10 +19,10 @@
 #include <sleep.hpp>
 #include <system.hpp>
 #include <http_server.hpp>
-#include <globals.hpp>
 #include <ble.hpp>
 
 #include <uri_handles.hpp>
+#include <globals.hpp>
 
 extern "C" {
 void app_main(void);
@@ -51,9 +51,12 @@ LDM::Camera camera = LDM::Camera(FRAMESIZE_QCIF, PIXFORMAT_JPEG, 10, 1);
 
 // define extern variables
 cJSON * json_system = NULL;
-LDM::BLE *g_ble;
-LDM::HTTP_Server *g_http_server;
-LDM::System *g_system;
+LDM::NVS *g_nvs = NULL;
+LDM::BLE *g_ble = NULL;
+LDM::HTTP_Server *g_http_server = NULL;
+LDM::HTTP_Client *g_http_client = NULL;
+LDM::System *g_system = NULL;
+
 std::vector<LDM::Sensor*> sensors {
 #if CONFIG_DHT_SENSOR_ENABLED
     &dht,
@@ -82,6 +85,7 @@ void app_main(void) {
     nvs.setKeyU8("broadcast", broadcast);
     nvs.commit();
     nvs.close();
+    g_nvs = &nvs;
 
     // sensors.at(0)->init();
     json_system = cJSON_CreateObject();

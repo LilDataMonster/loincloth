@@ -4,7 +4,9 @@
 #include <vector>
 #include <cJSON.h>
 #include <ble.hpp>
+#include <http_client.hpp>
 #include <http_server.hpp>
+#include <nvs.hpp>
 #include <system.hpp>
 
 // probably should avoid to use extern
@@ -26,11 +28,13 @@ extern LDM::Camera camera;
 // initialize vector of sensors
 extern std::vector<LDM::Sensor*> sensors;
 
-//
+// global handles
 extern cJSON * json_data;
 extern LDM::BLE *g_ble;
 extern LDM::HTTP_Server *g_http_server;
+extern LDM::HTTP_Client *g_http_client;
 extern LDM::System *g_system;
+extern LDM::NVS *g_nvs;
 
 // led parameters
 extern uint16_t led_fade_time;
