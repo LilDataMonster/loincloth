@@ -8,12 +8,11 @@
 
 // project headers
 #include <sensor.hpp>
-#include <http.hpp>
+#include <http_client.hpp>
 #include <tasks.hpp>
-// #include <wifi.hpp>
 #include <ble.hpp>
 #include <ota.hpp>
-#include <server.hpp>
+// #include <http_server.hpp>
 
 #include <sleep.hpp>
 #include <camera.hpp>
@@ -176,7 +175,7 @@ void http_task(void *pvParameters) {
 
     // setup wifi and http client
     // LDM::WiFi wifi;
-    LDM::HTTP http(const_cast<char*>(HTTP_POST_ENDPOINT));
+    LDM::HTTP_Client http(const_cast<char*>(HTTP_POST_ENDPOINT));
 
 #ifdef CONFIG_OTA_ENABLED
     // setup ota updater and checkUpdates

@@ -137,17 +137,17 @@ httpd_uri_t uri_data = {
 };
 
 // Camera URI
-static size_t jpg_encode_stream(void * arg, size_t index, const void* data, size_t len) {
-    jpg_chunking_t *j = (jpg_chunking_t *) arg;
-    if(!index) {
-        j->len = 0;
-    }
-    if(httpd_resp_send_chunk(j->req, (const char *)data, len) != ESP_OK) {
-        return 0;
-    }
-    j->len += len;
-    return len;
-}
+// static size_t jpg_encode_stream(void * arg, size_t index, const void* data, size_t len) {
+//     jpg_chunking_t *j = (jpg_chunking_t *) arg;
+//     if(!index) {
+//         j->len = 0;
+//     }
+//     if(httpd_resp_send_chunk(j->req, (const char *)data, len) != ESP_OK) {
+//         return 0;
+//     }
+//     j->len += len;
+//     return len;
+// }
 
 esp_err_t jpg_get_image_handler(httpd_req_t *req) {
     // camera_fb_t * fb = NULL;

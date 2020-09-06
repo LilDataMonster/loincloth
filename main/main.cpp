@@ -18,7 +18,7 @@
 #include <nvs.hpp>
 #include <sleep.hpp>
 #include <system.hpp>
-#include <server.hpp>
+#include <http_server.hpp>
 #include <sensors.hpp>
 #include <ble.hpp>
 
@@ -52,7 +52,7 @@ LDM::Camera camera = LDM::Camera(FRAMESIZE_QCIF, PIXFORMAT_JPEG, 10, 1);
 // define extern variables
 cJSON * json_system = NULL;
 LDM::BLE *g_ble;
-LDM::Server *g_http_server;
+LDM::HTTP_Server *g_http_server;
 LDM::System *g_system;
 std::vector<LDM::Sensor*> sensors {
 #if CONFIG_DHT_SENSOR_ENABLED
@@ -113,7 +113,7 @@ void app_main(void) {
     ble_dev.initBlufi();
     g_ble = &ble_dev;
 
-    LDM::Server server(const_cast<char*>(""));
+    LDM::HTTP_Server server(const_cast<char*>(""));
     g_http_server = &server;
 
     httpd_config_t * server_config = g_http_server->getConfig();

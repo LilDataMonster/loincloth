@@ -4,9 +4,8 @@
 #include <vector>
 #include <cJSON.h>
 #include <ble.hpp>
-#include <server.hpp>
+#include <http_server.hpp>
 #include <system.hpp>
-
 
 // probably should avoid to use extern
 #if CONFIG_DHT_SENSOR_ENABLED
@@ -29,7 +28,7 @@ extern std::vector<LDM::Sensor*> sensors;
 
 extern cJSON * json_data;
 extern LDM::BLE *g_ble;
-extern LDM::Server *g_http_server;
+extern LDM::HTTP_Server *g_http_server;
 extern LDM::System *g_system;
 
 extern uint16_t led_fade_time;
