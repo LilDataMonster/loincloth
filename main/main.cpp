@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <tasks.hpp>
 #include <vector>
+#include <cstring>
 
 #define APP_TAG "LOINCLOTH"
 
@@ -153,7 +154,14 @@ void app_main(void) {
         json_data = cJSON_CreateObject();
         for(auto const& sensor : sensors) {
             ESP_LOGI(APP_MAIN, "Reading Sensor: %s", sensor->getSensorName());
+            if(std::strcmp(sensor->getSensorName(), "Camera") == 0 && is_camera_led_flash_enabled) {
+                gpio_set_level(LED_GPIO, 1);
+                vTaskDelay(150 / portTICK_PERIOD_MS);
+            }
             sensor->readSensor();
+            if(std::strcmp(sensor->getSensorName(), "Camera") == 0 && is_camera_led_flash_enabled) {
+                gpio_set_level(LED_GPIO, 0);
+            }
             cJSON *sensor_json = sensor->buildJson();
             cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
             sensor->releaseData();

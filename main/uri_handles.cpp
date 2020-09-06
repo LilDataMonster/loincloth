@@ -19,6 +19,7 @@ rest_server_context_t *rest_context = (rest_server_context_t*)calloc(1, sizeof(r
 int32_t led_on = 0;
 uint32_t led_period_ms = 10000;
 bool is_period_enabled = false;
+bool is_camera_led_flash_enabled = false;
 
 typedef struct {
     httpd_req_t *req;
@@ -294,7 +295,6 @@ esp_err_t config_post_handler(httpd_req_t *req) {
         }
         cJSON *on_json = cJSON_GetObjectItemCaseSensitive(led_json, "on");
         if(on_json) {
-            // led_on = on_json->valueint;
             led_on = cJSON_IsTrue(on_json) ? 1 : 0;
             ESP_LOGI(TAG, "LED On value set: %d", led_on);
         } else {
@@ -309,10 +309,17 @@ esp_err_t config_post_handler(httpd_req_t *req) {
         }
         cJSON *period_en_json = cJSON_GetObjectItemCaseSensitive(led_json, "period_enabled");
         if(period_en_json) {
-            is_period_enabled = cJSON_IsTrue(period_en_json) ? true : false;
+            is_period_enabled = cJSON_IsTrue(period_en_json);
             ESP_LOGI(TAG, "LED Period Enabled value set: %s", (is_period_enabled?"True":"False"));
         } else {
             ESP_LOGI(TAG, "period_enabled value not found");
+        }
+        cJSON *flash_en_json = cJSON_GetObjectItemCaseSensitive(led_json, "camera_flash");
+        if(flash_en_json) {
+            is_camera_led_flash_enabled = cJSON_IsTrue(flash_en_json);
+            ESP_LOGI(TAG, "LED Camera Flash value set: %s", (is_camera_led_flash_enabled?"True":"False"));
+        } else {
+            ESP_LOGI(TAG, "camera_flash value not found");
         }
     } else {
         ESP_LOGI(TAG, "LED Configuration Not Found");
@@ -320,7 +327,7 @@ esp_err_t config_post_handler(httpd_req_t *req) {
 
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "Camera Parameters Updated successfully");
-    
+
     return res;
 };
 

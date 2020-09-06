@@ -40,7 +40,6 @@ uint16_t led_fade_time = 3000;
 uint16_t led_duty = 4000;
 // int32_t led_on = 0;
 
-#define LED_GPIO GPIO_NUM_4
 #define GPIO_OUTPUT_IO_0    LED_GPIO
 #define GPIO_OUTPUT_PIN_SEL  (1ULL<<GPIO_OUTPUT_IO_0)
 // #define GPIO_OUTPUT_IO_1    19
