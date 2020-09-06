@@ -141,10 +141,9 @@ void app_main(void) {
             g_http_server->registerUriHandle(&uri_post);
             g_http_server->registerUriHandle(&uri_data);
             g_http_server->registerUriHandle(&uri_get_camera);
-            g_http_server->registerUriHandle(&uri_post_camera);
-            g_http_server->registerUriHandle(&uri_options_camera);
+            g_http_server->registerUriHandle(&uri_post_config);
+            g_http_server->registerUriHandle(&uri_options_config);
             g_http_server->registerUriHandle(&uri_get_stream);
-            g_http_server->registerUriHandle(&uri_post_led);
         }
 
         if(json_data != NULL) {

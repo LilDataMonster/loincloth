@@ -104,19 +104,19 @@ esp_err_t data_post_handler(httpd_req_t *req) {
     int blue = 0;
 
     cJSON *root = cJSON_Parse(buf);
-    cJSON *red_json = cJSON_GetObjectItem(root, "red");
+    cJSON *red_json = cJSON_GetObjectItemCaseSensitive(root, "red");
     if(red_json) {
         red = red_json->valueint;
     } else {
         ESP_LOGI(TAG, "Red value not found");
     }
-    cJSON *green_json = cJSON_GetObjectItem(root, "green");
+    cJSON *green_json = cJSON_GetObjectItemCaseSensitive(root, "green");
     if(green_json) {
         green = green_json->valueint;
     } else {
         ESP_LOGI(TAG, "Green value not found");
     }
-    cJSON *blue_json = cJSON_GetObjectItem(root, "blue");
+    cJSON *blue_json = cJSON_GetObjectItemCaseSensitive(root, "blue");
     if(blue_json) {
         blue = blue_json->valueint;
     } else {
@@ -149,7 +149,7 @@ static size_t jpg_encode_stream(void * arg, size_t index, const void* data, size
 }
 
 esp_err_t jpg_get_image_handler(httpd_req_t *req) {
-    camera_fb_t * fb = NULL;
+    // camera_fb_t * fb = NULL;
     esp_err_t res = ESP_OK;
     size_t fb_len = 0;
     int64_t fr_start = esp_timer_get_time();
@@ -207,7 +207,7 @@ httpd_uri_t uri_get_camera = {
 };
 
 #define GET_INT_VAL_TYPE(_json, _root, _key, _fn, _type)         \
-      cJSON * _json = cJSON_GetObjectItem(_root, #_key);    \
+      cJSON * _json = cJSON_GetObjectItemCaseSensitive(_root, #_key);    \
       if(_json) {                                           \
           s->_fn(s, (_type)_json->valueint);                \
           ESP_LOGI(TAG, #_key" value set: %d", _json->valueint);           \
@@ -218,7 +218,7 @@ httpd_uri_t uri_get_camera = {
 #define GET_INT_VAL(_json, _root, _key, _fn) \
       GET_INT_VAL_TYPE(_json, _root, _key, _fn, int)
 
-esp_err_t camera_post_handler(httpd_req_t *req) {
+esp_err_t config_post_handler(httpd_req_t *req) {
     esp_err_t res = ESP_OK;
     int total_len = req->content_len;
     int cur_len = 0;
@@ -243,142 +243,100 @@ esp_err_t camera_post_handler(httpd_req_t *req) {
     sensor_t *s = camera.getSensor();
 
     cJSON *root = cJSON_Parse(buf);
-    // framesize [0-10]
-    GET_INT_VAL_TYPE(framesize_json, root, framesize, set_framesize, framesize_t);
-    GET_INT_VAL(quality_json, root, quality, set_quality);
-    GET_INT_VAL(contrast_json, root, contrast, set_contrast);
-    GET_INT_VAL(brightness_json, root, brightness, set_brightness);
-    GET_INT_VAL(saturation_json, root, saturation, set_saturation);
-    GET_INT_VAL_TYPE(gainceiling_json, root, gainceiling, set_gainceiling, gainceiling_t);
-    GET_INT_VAL(colorbar_json, root, colorbar, set_colorbar);
-    GET_INT_VAL(whitebal_json, root, whitebal, set_whitebal);
-    GET_INT_VAL(gain_ctrl_json, root, gain_ctrl, set_gain_ctrl);
-    GET_INT_VAL(exposure_ctrl_json, root, exposure_ctrl, set_exposure_ctrl);
-    GET_INT_VAL(hmirror_json, root, hmirror, set_hmirror);
-    GET_INT_VAL(sharpness_json, root, sharpness, set_sharpness);
-    GET_INT_VAL(vflip_json, root, vflip, set_vflip);
-    GET_INT_VAL(awb_gain_json, root, awb_gain, set_awb_gain);
-    GET_INT_VAL(agc_gain_json, root, agc_gain, set_agc_gain);
-    GET_INT_VAL(aec_value_json, root, aec_value, set_aec_value);
-    GET_INT_VAL(aec2_json, root, aec2, set_aec2);
-    GET_INT_VAL(dcw_json, root, dcw, set_dcw);
-    GET_INT_VAL(bpc_json, root, bpc, set_bpc);
-    GET_INT_VAL(wpc_json, root, wpc, set_wpc);
-    GET_INT_VAL(raw_gma_json, root, raw_gma, set_raw_gma);
-    GET_INT_VAL(lenc_json, root, lenc, set_lenc);
-    GET_INT_VAL(special_effect_json, root, special_effect, set_special_effect);
-    GET_INT_VAL(wb_mode_json, root, wb_mode, set_wb_mode);
-    GET_INT_VAL(ae_level_json, root, ae_level, set_ae_level);
 
-    cJSON *duty_json = cJSON_GetObjectItem(root, "duty");
-    if(duty_json) {
-        led_duty = duty_json->valueint;
+    cJSON *camera_json = cJSON_GetObjectItemCaseSensitive(root, "camera");
+    if(camera_json != NULL) {
+        // framesize [0-10]
+        GET_INT_VAL_TYPE(framesize_json, camera_json, framesize, set_framesize, framesize_t);
+        GET_INT_VAL(quality_json, camera_json, quality, set_quality);
+        GET_INT_VAL(contrast_json, camera_json, contrast, set_contrast);
+        GET_INT_VAL(brightness_json, camera_json, brightness, set_brightness);
+        GET_INT_VAL(saturation_json, camera_json, saturation, set_saturation);
+        GET_INT_VAL_TYPE(gainceiling_json, camera_json, gainceiling, set_gainceiling, gainceiling_t);
+        GET_INT_VAL(colorbar_json, camera_json, colorbar, set_colorbar);
+        GET_INT_VAL(whitebal_json, camera_json, whitebal, set_whitebal);
+        GET_INT_VAL(gain_ctrl_json, camera_json, gain_ctrl, set_gain_ctrl);
+        GET_INT_VAL(exposure_ctrl_json, camera_json, exposure_ctrl, set_exposure_ctrl);
+        GET_INT_VAL(hmirror_json, camera_json, hmirror, set_hmirror);
+        GET_INT_VAL(sharpness_json, camera_json, sharpness, set_sharpness);
+        GET_INT_VAL(vflip_json, camera_json, vflip, set_vflip);
+        GET_INT_VAL(awb_gain_json, camera_json, awb_gain, set_awb_gain);
+        GET_INT_VAL(agc_gain_json, camera_json, agc_gain, set_agc_gain);
+        GET_INT_VAL(aec_value_json, camera_json, aec_value, set_aec_value);
+        GET_INT_VAL(aec2_json, camera_json, aec2, set_aec2);
+        GET_INT_VAL(dcw_json, camera_json, dcw, set_dcw);
+        GET_INT_VAL(bpc_json, camera_json, bpc, set_bpc);
+        GET_INT_VAL(wpc_json, camera_json, wpc, set_wpc);
+        GET_INT_VAL(raw_gma_json, camera_json, raw_gma, set_raw_gma);
+        GET_INT_VAL(lenc_json, camera_json, lenc, set_lenc);
+        GET_INT_VAL(special_effect_json, camera_json, special_effect, set_special_effect);
+        GET_INT_VAL(wb_mode_json, camera_json, wb_mode, set_wb_mode);
+        GET_INT_VAL(ae_level_json, camera_json, ae_level, set_ae_level);
     } else {
-        ESP_LOGI(TAG, "Duty value not found");
+        ESP_LOGI(TAG, "Camera Configuration Not Found");
     }
+
+    cJSON *led_json = cJSON_GetObjectItemCaseSensitive(root, "led");
+    if(led_json != NULL) {
+        cJSON *duty_json = cJSON_GetObjectItemCaseSensitive(led_json, "duty");
+        if(duty_json) {
+            led_duty = duty_json->valueint;
+            ESP_LOGI(TAG, "LED Duty value set: %d", led_duty);
+        } else {
+            ESP_LOGI(TAG, "duty value not found");
+        }
+        cJSON *fade_json = cJSON_GetObjectItemCaseSensitive(led_json, "fade");
+        if(fade_json) {
+            led_fade_time = fade_json->valueint;
+            ESP_LOGI(TAG, "LED Fade Time value set: %d", led_fade_time);
+        } else {
+            ESP_LOGI(TAG, "fade value not found");
+        }
+        cJSON *on_json = cJSON_GetObjectItemCaseSensitive(led_json, "on");
+        if(on_json) {
+            // led_on = on_json->valueint;
+            led_on = cJSON_IsTrue(on_json) ? 1 : 0;
+            ESP_LOGI(TAG, "LED On value set: %d", led_on);
+        } else {
+            ESP_LOGI(TAG, "on value not found");
+        }
+        cJSON *period_json = cJSON_GetObjectItemCaseSensitive(led_json, "period");
+        if(period_json) {
+            led_period_ms = period_json->valueint;
+            ESP_LOGI(TAG, "LED Period ms value set: %d", led_period_ms);
+        } else {
+            ESP_LOGI(TAG, "period value not found");
+        }
+        cJSON *period_en_json = cJSON_GetObjectItemCaseSensitive(led_json, "period_enabled");
+        if(period_en_json) {
+            is_period_enabled = cJSON_IsTrue(period_en_json) ? true : false;
+            ESP_LOGI(TAG, "LED Period Enabled value set: %s", (is_period_enabled?"True":"False"));
+        } else {
+            ESP_LOGI(TAG, "period_enabled value not found");
+        }
+    } else {
+        ESP_LOGI(TAG, "LED Configuration Not Found");
+    }
+
+    cJSON_Delete(root);
     httpd_resp_sendstr(req, "Camera Parameters Updated successfully");
+    
     return res;
 };
 
-httpd_uri_t uri_post_camera = {
-   .uri      = "/camera",
+httpd_uri_t uri_post_config = {
+   .uri      = "/config",
    .method   = HTTP_POST,
-   .handler  = camera_post_handler,
+   .handler  = config_post_handler,
    .user_ctx = rest_context
 };
 
-esp_err_t camera_options_handler(httpd_req_t *req) {
-    esp_err_t err = ESP_OK;
-
-    char*  buf;
-    size_t buf_len;
-
-    /* Get header value string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
-    if (buf_len > 1) {
-        buf = (char*)malloc(buf_len);
-        /* Copy null terminated value string into buffer */
-        if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) {
-            ESP_LOGI(TAG, "Found header => Host: %s", buf);
-        }
-        free(buf);
-    }
-
-    buf_len = httpd_req_get_hdr_value_len(req, "Content-Type") + 1;
-    if (buf_len > 1) {
-        buf = (char*)malloc(buf_len);
-        if (httpd_req_get_hdr_value_str(req, "Content-Type", buf, buf_len) == ESP_OK) {
-            ESP_LOGI(TAG, "Found header => Content-Type: %s", buf);
-        }
-        free(buf);
-    }
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = (char*)malloc(buf_len);
-        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-            ESP_LOGI(TAG, "Found URL query => %s", buf);
-            char param[32];
-            /* Get value of expected key from query string */
-            if (httpd_query_key_value(buf, "query1", param, sizeof(param)) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query parameter => query1=%s", param);
-            }
-            if (httpd_query_key_value(buf, "query3", param, sizeof(param)) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query parameter => query3=%s", param);
-            }
-            if (httpd_query_key_value(buf, "query2", param, sizeof(param)) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query parameter => query2=%s", param);
-            }
-        }
-        free(buf);
-    }
-
-    err = httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    // Access-Control-Allow-Origin
-    // int total_len = req->content_len;
-    // int cur_len = 0;
-    // char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
-    // int received = 0;
-    // if (total_len >= SCRATCH_BUFSIZE) {
-    //     /* Respond with 500 Internal Server Error */
-    //     httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
-    //     return ESP_FAIL;
-    // }
-    // while (cur_len < total_len) {
-    //     received = httpd_req_recv(req, buf + cur_len, total_len);
-    //     if (received <= 0) {
-    //         /* Respond with 500 Internal Server Error */
-    //         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
-    //         return ESP_FAIL;
-    //     }
-    //     cur_len += received;
-    // }
-    // buf[total_len] = '\0';
-    //
-    // printf("Data: %s\n", buf);
-    //
-    // const char* field = "Content-Type";
-    // size_t buf_len = httpd_req_get_hdr_value_len(req, field);
-    // char* buffer = (char*)malloc(buf_len);
-    // err = httpd_req_get_hdr_value_str(req, field, buffer, buf_len);
-    // if(err != ESP_OK) {
-    //     ESP_LOGE(TAG, "Error getting query string: %s", esp_err_to_name(err));
-    //     return err;
-    // }
-    //
-    // ESP_LOGI(TAG, "URL QUERY STRING: %s", buffer);
-
-    return err;
-}
 // methods: https://github.com/espressif/esp-idf/blob/master/components/nghttp/port/include/http_parser.h
-httpd_uri_t uri_options_camera = {
-   .uri      = "/camera",
+httpd_uri_t uri_options_config = {
+   .uri      = "/config",
    .method   = HTTP_OPTIONS,
    // .handler  = camera_options_handler,
-   .handler  = camera_post_handler,
+   .handler  = config_post_handler,
    .user_ctx = rest_context
 };
 
@@ -388,7 +346,7 @@ static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" 
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
 static const char* _STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
 esp_err_t jpg_get_stream_handler(httpd_req_t *req) {
-    camera_fb_t * fb = NULL;
+    // camera_fb_t * fb = NULL;
     esp_err_t res = ESP_OK;
     size_t _jpg_buf_len;
     uint8_t * _jpg_buf;
@@ -465,79 +423,3 @@ httpd_uri_t uri_get_stream = {
    .handler  = jpg_get_stream_handler,
    .user_ctx = NULL
 };
-
-// LED Post URI
-esp_err_t led_post_handler(httpd_req_t *req) {
-    int total_len = req->content_len;
-    int cur_len = 0;
-    char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
-    int received = 0;
-    if (total_len >= SCRATCH_BUFSIZE) {
-        /* Respond with 500 Internal Server Error */
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
-        return ESP_FAIL;
-    }
-    while (cur_len < total_len) {
-        received = httpd_req_recv(req, buf + cur_len, total_len);
-        if (received <= 0) {
-            /* Respond with 500 Internal Server Error */
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
-            return ESP_FAIL;
-        }
-        cur_len += received;
-    }
-    buf[total_len] = '\0';
-
-    cJSON *root = cJSON_Parse(buf);
-    cJSON *duty_json = cJSON_GetObjectItem(root, "duty");
-    if(duty_json) {
-        led_duty = duty_json->valueint;
-    } else {
-        ESP_LOGI(TAG, "duty value not found");
-    }
-    cJSON *fade_json = cJSON_GetObjectItem(root, "fade");
-    if(fade_json) {
-        led_fade_time = fade_json->valueint;
-    } else {
-        ESP_LOGI(TAG, "fade value not found");
-    }
-    cJSON *on_json = cJSON_GetObjectItem(root, "on");
-    if(on_json) {
-        led_on = on_json->valueint;
-    } else {
-        ESP_LOGI(TAG, "on value not found");
-    }
-    cJSON *period_json = cJSON_GetObjectItem(root, "period");
-    if(period_json) {
-        led_period_ms = period_json->valueint;
-    } else {
-        ESP_LOGI(TAG, "period value not found");
-    }
-    cJSON *period_en_json = cJSON_GetObjectItem(root, "period_enabled");
-    if(period_en_json) {
-        is_period_enabled = cJSON_IsTrue(period_en_json) ? true : false;
-    } else {
-        ESP_LOGI(TAG, "period_enabled value not found");
-    }
-
-    ESP_LOGI(TAG, "LED control: duty = %d, fade = %d, on = %d, period = %u, period_enabled = %s",
-              led_duty, led_fade_time, led_on, led_period_ms, (is_period_enabled ? "True":"False"));
-    cJSON_Delete(root);
-    httpd_resp_sendstr(req, "LED values updated successfully");
-    return ESP_OK;
-}
-
-httpd_uri_t uri_post_led = {
-   .uri      = "/led",
-   .method   = HTTP_POST,
-   .handler  = led_post_handler,
-   .user_ctx = rest_context
-};
-
-// httpd_uri_t uri_options_led = {
-//    .uri      = "/led",
-//    .method   = HTTP_OPTIONS,
-//    // .handler  = camera_options_handler,
-//    .handler  = led_post_handler,
-//    .user_ctx = rest_context
-// };
