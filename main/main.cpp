@@ -159,7 +159,9 @@ void app_main(void) {
                 vTaskDelay(150 / portTICK_PERIOD_MS);
             }
             sensor->readSensor();
-            if(std::strcmp(sensor->getSensorName(), "Camera") == 0 && is_camera_led_flash_enabled) {
+            if(std::strcmp(sensor->getSensorName(), "Camera") == 0 &&
+               !led_on &&
+               is_camera_led_flash_enabled) {
                 gpio_set_level(LED_GPIO, 0);
             }
             cJSON *sensor_json = sensor->buildJson();

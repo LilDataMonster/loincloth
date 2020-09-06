@@ -26,6 +26,7 @@ extern LDM::Camera camera;
 // initialize vector of sensors
 extern std::vector<LDM::Sensor*> sensors;
 
+//
 extern cJSON * json_data;
 extern LDM::BLE *g_ble;
 extern LDM::HTTP_Server *g_http_server;
