@@ -12,7 +12,6 @@
 #include <tasks.hpp>
 #include <ble.hpp>
 #include <ota.hpp>
-// #include <http_server.hpp>
 
 #include <sleep.hpp>
 #include <camera.hpp>
@@ -20,12 +19,13 @@
 #include <vector>
 
 #include <led.hpp>
-#include <sensors.hpp>
 #include <ble.hpp>
 #include <system.hpp>
 
 #include <driver/gpio.h>
 #include <uri_handles.hpp>
+
+#include <globals.hpp>
 
 #define SLEEP_DURATION CONFIG_SLEEP_DURATION
 #define BLE_ADVERTISE_DURATION CONFIG_BLE_ADVERTISE_DURATION

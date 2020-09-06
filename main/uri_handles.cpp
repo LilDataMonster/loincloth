@@ -3,7 +3,7 @@
 #include <cJSON.h>
 #include <esp_log.h>
 #include <camera.hpp>
-#include <sensors.hpp>
+#include <globals.hpp>
 #include <uri_handles.hpp>
 
 #define TAG "URI_HANDLE"
@@ -207,13 +207,13 @@ httpd_uri_t uri_get_camera = {
    .user_ctx = NULL
 };
 
-#define GET_INT_VAL_TYPE(_json, _root, _key, _fn, _type)         \
+#define GET_INT_VAL_TYPE(_json, _root, _key, _fn, _type)                 \
       cJSON * _json = cJSON_GetObjectItemCaseSensitive(_root, #_key);    \
-      if(_json) {                                           \
-          s->_fn(s, (_type)_json->valueint);                \
-          ESP_LOGI(TAG, #_key" value set: %d", _json->valueint);           \
-      } else {                                              \
-          ESP_LOGI(TAG, #_key" value not found");           \
+      if(cJSON_IsNumber(_json)) {                                        \
+          s->_fn(s, (_type)_json->valueint);                             \
+          ESP_LOGI(TAG, #_key" value set: %d", _json->valueint);         \
+      } else {                                                           \
+          ESP_LOGI(TAG, #_key" value not found");                        \
       }
 
 #define GET_INT_VAL(_json, _root, _key, _fn) \
@@ -246,7 +246,7 @@ esp_err_t config_post_handler(httpd_req_t *req) {
     cJSON *root = cJSON_Parse(buf);
 
     cJSON *camera_json = cJSON_GetObjectItemCaseSensitive(root, "camera");
-    if(camera_json != NULL) {
+    if(cJSON_IsObject(camera_json)) {
         // framesize [0-10]
         GET_INT_VAL_TYPE(framesize_json, camera_json, framesize, set_framesize, framesize_t);
         GET_INT_VAL(quality_json, camera_json, quality, set_quality);
@@ -278,44 +278,44 @@ esp_err_t config_post_handler(httpd_req_t *req) {
     }
 
     cJSON *led_json = cJSON_GetObjectItemCaseSensitive(root, "led");
-    if(led_json != NULL) {
+    if(cJSON_IsObject(led_json)) {
         cJSON *duty_json = cJSON_GetObjectItemCaseSensitive(led_json, "duty");
-        if(duty_json) {
+        if(cJSON_IsNumber(duty_json)) {
             led_duty = duty_json->valueint;
             ESP_LOGI(TAG, "LED Duty value set: %d", led_duty);
         } else {
             ESP_LOGI(TAG, "duty value not found");
         }
         cJSON *fade_json = cJSON_GetObjectItemCaseSensitive(led_json, "fade");
-        if(fade_json) {
+        if(cJSON_IsNumber(fade_json)) {
             led_fade_time = fade_json->valueint;
             ESP_LOGI(TAG, "LED Fade Time value set: %d", led_fade_time);
         } else {
             ESP_LOGI(TAG, "fade value not found");
         }
         cJSON *on_json = cJSON_GetObjectItemCaseSensitive(led_json, "on");
-        if(on_json) {
+        if(cJSON_IsBool(on_json)) {
             led_on = cJSON_IsTrue(on_json) ? 1 : 0;
             ESP_LOGI(TAG, "LED On value set: %d", led_on);
         } else {
             ESP_LOGI(TAG, "on value not found");
         }
         cJSON *period_json = cJSON_GetObjectItemCaseSensitive(led_json, "period");
-        if(period_json) {
+        if(cJSON_IsNumber(period_json)) {
             led_period_ms = period_json->valueint;
             ESP_LOGI(TAG, "LED Period ms value set: %d", led_period_ms);
         } else {
             ESP_LOGI(TAG, "period value not found");
         }
         cJSON *period_en_json = cJSON_GetObjectItemCaseSensitive(led_json, "period_enabled");
-        if(period_en_json) {
+        if(cJSON_IsBool(period_en_json)) {
             is_period_enabled = cJSON_IsTrue(period_en_json);
             ESP_LOGI(TAG, "LED Period Enabled value set: %s", (is_period_enabled?"True":"False"));
         } else {
             ESP_LOGI(TAG, "period_enabled value not found");
         }
         cJSON *flash_en_json = cJSON_GetObjectItemCaseSensitive(led_json, "camera_flash");
-        if(flash_en_json) {
+        if(cJSON_IsBool(flash_en_json)) {
             is_camera_led_flash_enabled = cJSON_IsTrue(flash_en_json);
             ESP_LOGI(TAG, "LED Camera Flash value set: %s", (is_camera_led_flash_enabled?"True":"False"));
         } else {

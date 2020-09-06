@@ -24,15 +24,4 @@ extern httpd_uri_t uri_options_config;
 
 esp_err_t jpg_get_stream_handler(httpd_req_t *req);
 extern httpd_uri_t uri_get_stream;
-
-// led parameters
-extern int32_t led_on;
-extern uint32_t led_period_ms;
-extern bool is_period_enabled;
-extern bool is_camera_led_flash_enabled;
-
-// system parameters
-extern uint32_t sleep_period_ms;
-extern uint32_t read_sensor_period_ms;
-extern uint32_t publish_url;
 #endif

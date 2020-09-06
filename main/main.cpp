@@ -19,7 +19,7 @@
 #include <sleep.hpp>
 #include <system.hpp>
 #include <http_server.hpp>
-#include <sensors.hpp>
+#include <globals.hpp>
 #include <ble.hpp>
 
 #include <uri_handles.hpp>
