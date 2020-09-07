@@ -69,23 +69,48 @@ std::vector<LDM::Sensor*> sensors {
 #endif
 };
 
+#define DEFAULT_SSID CONFIG_WIFI_SSID
+#define DEFAULT_PWD CONFIG_WIFI_PASSWORD
 #define APP_MAIN "LDM:Main"
 void app_main(void) {
 
+    esp_err_t err = ESP_OK;
     LDM::Sleep::getWakeupCause();
 
     // open the "broadcast" key-value pair from the "state" namespace in NVS
     uint8_t broadcast = 0; // value will default to 0, if not set yet in NVS
 
+    wifi_config_t wifi_config = {};
+    size_t wifi_size = 0;
+
     // initialize nvs
     LDM::NVS nvs;
-    nvs.openNamespace("state");
-    nvs.getKeyU8("broadcast", &broadcast);
-    broadcast++;
-    nvs.setKeyU8("broadcast", broadcast);
-    nvs.commit();
-    nvs.close();
     g_nvs = &nvs;
+    g_nvs->openNamespace("system");
+
+    // load/update broadcast
+    g_nvs->getKeyU8("broadcast", &broadcast);
+    broadcast++;
+    g_nvs->setKeyU8("broadcast", broadcast);
+    g_nvs->commit();
+
+    uint8_t ssid[32];
+    uint8_t passwd[64];
+    // load wifi settings
+    err = g_nvs->getKeyStr("wifi_ssid", NULL, &wifi_size);      // fetch wifi ssid size (max 32)
+    if(err == ESP_OK) {
+        // g_nvs->getKeyStr("wifi_ssid", (char*)ssid, &wifi_size);
+        g_nvs->getKeyStr("wifi_ssid", (char*)wifi_config.sta.ssid, &wifi_size);
+        // g_nvs->getKeyStr("wifi_password", NULL, &wifi_size);  // fetch wifi ssid size (max 64)
+        // g_nvs->getKeyStr("wifi_password", (char*)passwd, &wifi_size);
+        g_nvs->getKeyStr("wifi_password", (char*)wifi_config.sta.password, &wifi_size);
+    } else {
+        std::strcpy((char*)ssid, DEFAULT_SSID);
+        std::strcpy((char*)passwd, DEFAULT_PWD);
+        // std::strcpy((char*)wifi_config.sta.ssid, DEFAULT_SSID);
+        // std::strcpy((char*)wifi_config.sta.password, DEFAULT_PWD);
+    }
+    g_nvs->close();
 
     // sensors.at(0)->init();
     json_system = cJSON_CreateObject();
@@ -111,10 +136,21 @@ void app_main(void) {
     //     ESP_LOGI(APP_TAG, "Board in setup mode");
     // }
 
+    // wifi_config_t w_config = {};
+    // std::strcpy((char*)w_config.sta.ssid, "DavidsTheBest");
+    // std::strcpy((char*)w_config.sta.password, "Besties2");
+    // std::strcpy((char*)w_config.sta.ssid, (char*)ssid);
+    // std::strcpy((char*)w_config.sta.password, (char*)passwd);
+
+    // LDM::WiFi wifi;
+    // wifi.init(&w_config);
+
     LDM::BLE ble_dev(const_cast<char*>("BLUFI_TEST"));
     ble_dev.init();
     ble_dev.setupDefaultBlufiCallback();
-    ble_dev.initBlufi();
+    // ble_dev.initBlufi(&w_config);
+    ble_dev.initBlufi(&wifi_config);
+    // ble_dev.initBlufi();
     g_ble = &ble_dev;
 
     LDM::HTTP_Server server(const_cast<char*>(""));
@@ -139,8 +175,12 @@ void app_main(void) {
         sensor->init();
     }
 
+    // ble_dev.wifi.disconnect();
+    // ble_dev.wifi.connect();
     while(true) {
+        // TODO: Handle disconnect/stopping server
         if(g_ble->wifi.isConnected() && !g_http_server->isStarted()) {
+        // if(!g_http_server->isStarted()) {
             g_http_server->startServer();
             g_http_server->registerUriHandle(&uri_get);
             g_http_server->registerUriHandle(&uri_post);
@@ -176,6 +216,35 @@ void app_main(void) {
             // printf("%s\n", sensor_out);
             // free(sensor_out);
         }
+
+        if(g_nvs != NULL) {
+            // get current wifi config
+            wifi_config_t wifi_config_tmp;
+            err |= g_ble->wifi.getConfig(ESP_IF_WIFI_STA, &wifi_config_tmp);
+
+            // update NVS ssid and password if different from initial ssid/password
+            ESP_LOGI(APP_MAIN, "Comparing SSID: %s to tmp_SSID: %s", wifi_config.sta.ssid, wifi_config_tmp.sta.ssid);
+            ESP_LOGI(APP_MAIN, "Comparing password: %s to tmp_password: %s", wifi_config.sta.password, wifi_config_tmp.sta.password);
+            if(std::strcmp((char*)wifi_config.sta.ssid, (char*)wifi_config_tmp.sta.ssid) != 0 &&
+               std::strcmp((char*)wifi_config.sta.password, (char*)wifi_config_tmp.sta.password) != 0){
+               err = g_nvs->openNamespace("system");
+               if(err == ESP_OK) {
+                   err |= g_nvs->setKeyStr("wifi_ssid", reinterpret_cast<char*>(wifi_config_tmp.sta.ssid));
+                   err |= g_nvs->setKeyStr("wifi_password", reinterpret_cast<char*>(wifi_config_tmp.sta.password));
+                   err |= g_nvs->commit();
+                   g_nvs->close();
+
+                   ESP_LOGI(APP_MAIN, "Updated wifi settings in NVS");
+                   std::strcpy((char*)wifi_config.sta.ssid, (char*)wifi_config_tmp.sta.ssid);
+                   std::strcpy((char*)wifi_config.sta.password, (char*)wifi_config_tmp.sta.password);
+               }
+               if(err != ESP_OK) {
+                   ESP_LOGE(APP_MAIN, "Error saving wifi parameters to NVS");
+               }
+            }
+        }
+
+        // sleep
         vTaskDelay(pdMS_TO_TICKS(30000));
     }
 }
