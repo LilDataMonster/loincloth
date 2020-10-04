@@ -72,7 +72,7 @@ std::vector<LDM::Sensor*> sensors {
 };
 
 uint8_t mac[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-uint8_t ipv4[4] = {0xC0, 0xA8, 0x00, 0x67};
+uint8_t ipv4[4] = {0x00, 0x00, 0x00, 0x00};
 
 #define DEFAULT_SSID CONFIG_WIFI_SSID
 #define DEFAULT_PWD CONFIG_WIFI_PASSWORD
@@ -117,7 +117,9 @@ void app_main(void) {
     }
     g_nvs->close();
 
-    // sensors.at(0)->init();
+    // setup MAC for broadcasting
+    err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
     json_system = cJSON_CreateObject();
 
     LDM::System system;
@@ -155,9 +157,13 @@ void app_main(void) {
     ble_dev.setupDefaultBlufiCallback();
     // ble_dev.initBlufi(&w_config);
     ble_dev.initBlufi(&wifi_config);
+    ble_dev.registerGattServerCallback(gatts_event_handler);
+    ble_dev.registerGattServerAppId(ESP_APP_ID);
     // ble_dev.initBlufi();
 
-    ble_dev.registerGattServerCallback(gatts_event_handler);
+    // ESP_LOGI(APP_MAIN, "%x", esp_ip4_addr_get_byte(&ble_dev.wifi.ipv4_address, 0));
+    // ESP_LOGI(APP_MAIN, "%x", esp_ip4_addr_get_byte(LDM::WiFi::ipv4_address, 0));
+
     g_ble = &ble_dev;
 
     LDM::HTTP_Server server(const_cast<char*>(""));
@@ -185,6 +191,21 @@ void app_main(void) {
     // ble_dev.wifi.disconnect();
     // ble_dev.wifi.connect();
     while(true) {
+
+        if(ble_dev.wifi.getIpv4(ipv4) != ESP_OK) {
+            ESP_LOGE(APP_MAIN, "Unable to fetch IPV4");
+            ipv4[0] = 0;
+            ipv4[1] = 0;
+            ipv4[2] = 0;
+            ipv4[3] = 0;
+        } else {
+            ESP_LOGI(APP_MAIN, "Fetched IPV4: %x:%x:%x:%x", ipv4[0], ipv4[1], ipv4[2], ipv4[3]);
+            err = bleUpdateIpv4();
+            if(err != ESP_OK) {
+                ESP_LOGE(APP_MAIN, "Unable to update IPV4 Bluetooth characteristic");
+            }
+        }
+
         // TODO: Handle disconnect/stopping server
         if(g_ble->wifi.isConnected() && !g_http_server->isStarted()) {
             g_http_server->startServer();
