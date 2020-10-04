@@ -126,54 +126,17 @@ void app_main(void) {
     cJSON *system_json = system.buildJson();
     cJSON_AddItemToObject(json_data, APP_TAG, system_json);
 
-    // for(auto const& sensor : sensors) {
-    //     printf("Processing sensor %s\n", sensor->getSensorName());
-    //     sensor->init();
-    //     sensor->readSensor();
-    //     cJSON *sensor_json = sensor->buildJson();
-    //     char* sensor_out = cJSON_Print(sensor_json);
-    //     printf("%s\n", sensor_out);
-    //     free(sensor_out);
-    //     cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
-    // }
-
-    // char* output = cJSON_Print(json_data);
-
     // if(mode == BoardMode::setup) {
     //     ESP_LOGI(APP_TAG, "Board in setup mode");
     // }
 
-    // wifi_config_t w_config = {};
-    // std::strcpy((char*)w_config.sta.ssid, "DavidsTheBest");
-    // std::strcpy((char*)w_config.sta.password, "Besties2");
-    // std::strcpy((char*)w_config.sta.ssid, (char*)ssid);
-    // std::strcpy((char*)w_config.sta.password, (char*)passwd);
-
-    // LDM::WiFi wifi;
-    // wifi.init(&w_config);
-
     LDM::BLE ble_dev(const_cast<char*>("BLUFI_TEST"));
     ble_dev.init();
     ble_dev.setupDefaultBlufiCallback();
-    // ble_dev.initBlufi(&w_config);
     ble_dev.initBlufi(&wifi_config);
     ble_dev.registerGattServerCallback(gatts_event_handler);
     ble_dev.registerGattServerAppId(ESP_APP_ID);
-    // ble_dev.initBlufi();
-
-    // ESP_LOGI(APP_MAIN, "%x", esp_ip4_addr_get_byte(&ble_dev.wifi.ipv4_address, 0));
-    // ESP_LOGI(APP_MAIN, "%x", esp_ip4_addr_get_byte(LDM::WiFi::ipv4_address, 0));
-
     g_ble = &ble_dev;
-
-    LDM::HTTP_Server server(const_cast<char*>(""));
-    g_http_server = &server;
-
-    httpd_config_t * server_config = g_http_server->getConfig();
-    server_config->send_wait_timeout = 20;
-
-    // xTaskCreate(sensor_task, "sensor_task", 8192, (void*)&sensors, 5, NULL);
-    xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);
 
     // xTaskCreate(http_task, "http_task", 8192, (void*)output, 5, NULL);
     // xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);
@@ -183,6 +146,7 @@ void app_main(void) {
     // // setup watcher for sleep
     // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL);
 
+    // initialize sensor
     for(auto const& sensor : sensors) {
         ESP_LOGI(APP_MAIN, "Initializing Sensor: %s", sensor->getSensorName());
         sensor->init();
@@ -190,8 +154,19 @@ void app_main(void) {
 
     // ble_dev.wifi.disconnect();
     // ble_dev.wifi.connect();
+
+    // setup http server
+    LDM::HTTP_Server server(const_cast<char*>(""));
+    g_http_server = &server;
+    httpd_config_t * server_config = g_http_server->getConfig();
+    server_config->send_wait_timeout = 20;
+
+    // xTaskCreate(sensor_task, "sensor_task", 8192, (void*)&sensors, 5, NULL);
+    xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);
+
     while(true) {
 
+        // update bluetooth characteristic with latest ipv4 address
         if(ble_dev.wifi.getIpv4(ipv4) != ESP_OK) {
             ESP_LOGE(APP_MAIN, "Unable to fetch IPV4");
             ipv4[0] = 0;
@@ -210,6 +185,7 @@ void app_main(void) {
         if(g_ble->wifi.isConnected() && !g_http_server->isStarted()) {
             g_http_server->startServer();
             if(g_http_server->isStarted()) {
+                ESP_LOGI(APP_MAIN, "Registering HTTP Server URI Handles");
                 g_http_server->registerUriHandle(&uri_get);
                 g_http_server->registerUriHandle(&uri_post);
                 g_http_server->registerUriHandle(&uri_data);

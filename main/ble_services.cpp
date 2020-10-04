@@ -15,8 +15,7 @@ uint32_t gatt_handle_table[LDM_IDX_NB];
 // #define CHAR_DECLARATION_SIZE       (sizeof(uint8_t))
 
 /* Full Database Description - Used to add attributes into the database */
-const esp_gatts_attr_db_t gatt_db[LDM_IDX_NB] =
-{
+const esp_gatts_attr_db_t gatt_db[LDM_IDX_NB] = {
     // Service Declaration
     [LDM_IDX_SVC]        =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ,
@@ -76,14 +75,9 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 					esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
 
-void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
-{
+void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     switch (event) {
         case ESP_GATTS_REG_EVT: {
-        //     esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name(SAMPLE_DEVICE_NAME);
-        //     if (set_dev_name_ret){
-        //         ESP_LOGE(BLE_SERVICE_TAG, "set device name failed, error code = %x", set_dev_name_ret);
-        //     }
             esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(gatt_db, gatts_if, LDM_IDX_NB, SVC_INST_ID);
             if(create_attr_ret != ESP_OK) {
                 ESP_LOGE(BLE_SERVICE_TAG, "Create attr table failed, error %s", esp_err_to_name(create_attr_ret));
@@ -93,81 +87,11 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts
         case ESP_GATTS_READ_EVT:
             ESP_LOGI(BLE_SERVICE_TAG, "ESP_GATTS_READ_EVT, conn_id %d, trans_id %d, handle %d\n",
                       param->read.conn_id, param->read.trans_id, param->read.handle);
-            // ESP_LOGI(BLE_SERVICE_TAG, "gatt_handle_table[LDM_IDX_SVC] = %d", gatt_handle_table[LDM_IDX_SVC]);
-            // ESP_LOGI(BLE_SERVICE_TAG, "gatt_handle_table[LDM_MAC_CHAR] = %d", gatt_handle_table[LDM_MAC_CHAR]);
-            // ESP_LOGI(BLE_SERVICE_TAG, "gatt_handle_table[LDM_MAC_VAL] = %d", gatt_handle_table[LDM_MAC_VAL]);
-            // ESP_LOGI(BLE_SERVICE_TAG, "gatt_handle_table[LDM_IPV4_CHAR] = %d", gatt_handle_table[LDM_IPV4_CHAR]);
-            // ESP_LOGI(BLE_SERVICE_TAG, "gatt_handle_table[LDM_IPV4_VAL] = %d", gatt_handle_table[LDM_IPV4_VAL]);
-
-            // if(param->read.handle == gatt_handle_table[2]) {
-            //     esp_err_t err = esp_ble_gatts_set_attr_value(param->read.handle,
-            //                                                  sizeof(ipv4),
-            //                                                  ipv4);
-            //     if(err != ESP_OK) {
-            //         ESP_LOGE(BLE_SERVICE_TAG, "Failed to send GATTS Attribute: %s", esp_err_to_name(err));
-            //     }
-            //     // esp_gatt_rsp_t rsp;
-            //     // memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
-            //     // rsp.attr_value.handle = param->read.handle;
-            //     // rsp.attr_value.len = 4;
-            //     // rsp.attr_value.value[0] = 0xde;
-            //     // rsp.attr_value.value[1] = 0xed;
-            //     // rsp.attr_value.value[2] = 0xbe;
-            //     // rsp.attr_value.value[3] = 0xef;
-            //     // esp_err_t err = esp_ble_gatts_send_response(gatts_if,
-            //     //                                             param->read.conn_id,
-            //     //                                             param->read.trans_id,
-            //     //                                             ESP_GATT_OK, &rsp);
-            //     // if(err != ESP_OK) {
-            //     //     ESP_LOGE(BLE_SERVICE_TAG, "Failed to send GATTS Response: %s", esp_err_to_name(err));
-            //     // }
-            // }
        	    break;
         case ESP_GATTS_WRITE_EVT:
-            // if (!param->write.is_prep){
-            //     // the data length of gattc write  must be less than GATTS_DEMO_CHAR_VAL_LEN_MAX.
-            //     ESP_LOGI(BLE_SERVICE_TAG, "GATT_WRITE_EVT, handle = %d, value len = %d, value :", param->write.handle, param->write.len);
-            //     esp_log_buffer_hex(BLE_SERVICE_TAG, param->write.value, param->write.len);
-            //     if (heart_rate_handle_table[IDX_CHAR_CFG_A] == param->write.handle && param->write.len == 2){
-            //         uint16_t descr_value = param->write.value[1]<<8 | param->write.value[0];
-            //         if (descr_value == 0x0001){
-            //             ESP_LOGI(BLE_SERVICE_TAG, "notify enable");
-            //             uint8_t notify_data[15];
-            //             for (int i = 0; i < sizeof(notify_data); ++i)
-            //             {
-            //                 notify_data[i] = i % 0xff;
-            //             }
-            //             //the size of notify_data[] need less than MTU size
-            //             esp_ble_gatts_send_indicate(gatts_if, param->write.conn_id, heart_rate_handle_table[IDX_CHAR_VAL_A],
-            //                                     sizeof(notify_data), notify_data, false);
-            //         }else if (descr_value == 0x0002){
-            //             ESP_LOGI(BLE_SERVICE_TAG, "indicate enable");
-            //             uint8_t indicate_data[15];
-            //             for (int i = 0; i < sizeof(indicate_data); ++i)
-            //             {
-            //                 indicate_data[i] = i % 0xff;
-            //             }
-            //             //the size of indicate_data[] need less than MTU size
-            //             esp_ble_gatts_send_indicate(gatts_if, param->write.conn_id, heart_rate_handle_table[IDX_CHAR_VAL_A],
-            //                                 sizeof(indicate_data), indicate_data, true);
-            //         }
-            //         else if (descr_value == 0x0000){
-            //             ESP_LOGI(BLE_SERVICE_TAG, "notify/indicate disable ");
-            //         }else{
-            //             ESP_LOGE(BLE_SERVICE_TAG, "unknown descr value");
-            //             esp_log_buffer_hex(BLE_SERVICE_TAG, param->write.value, param->write.len);
-            //         }
-            //
-            //     }
-            //     /* send response when param->write.need_rsp is true*/
-            //     if (param->write.need_rsp){
-            //         esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
-            //     }
-            // }else{
-            //     /* handle prepare write */
-            //     example_prepare_write_event_env(gatts_if, &prepare_write_env, param);
-            // }
-      	    break;
+            ESP_LOGI(BLE_SERVICE_TAG, "ESP_GATTS_WRITE_EVT, conn_id %d, trans_id %d, handle %d\n",
+                      param->write.conn_id, param->write.trans_id, param->write.handle);
+            break;
         case ESP_GATTS_EXEC_WRITE_EVT:
             // the length of gattc prepare write data must be less than GATTS_DEMO_CHAR_VAL_LEN_MAX.
             ESP_LOGI(BLE_SERVICE_TAG, "ESP_GATTS_EXEC_WRITE_EVT");
@@ -212,10 +136,6 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts
                 ESP_LOGI(BLE_SERVICE_TAG, "Create attribute table successfully, the number handle = %d\n",param->add_attr_tab.num_handle);
                 memcpy(gatt_handle_table, param->add_attr_tab.handles, sizeof(gatt_handle_table));
                 esp_err_t err = esp_ble_gatts_start_service(gatt_handle_table[LDM_IDX_SVC]);
-                // esp_err_t err = esp_ble_gatts_start_service(param->add_attr_tab.handles[LDM_IDX_SVC]);
-                for(int i=0; i < param->add_attr_tab.num_handle; i++) {
-                    ESP_LOGE(BLE_SERVICE_TAG, "Attribute Handle: %d", gatt_handle_table[i]);
-                }
                 if(err != ESP_OK) {
                     ESP_LOGE(BLE_SERVICE_TAG, "Failed to start GATTS Service");
                 }
