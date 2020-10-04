@@ -23,6 +23,7 @@
 
 #include <uri_handles.hpp>
 #include <globals.hpp>
+#include <ble_services.hpp>
 
 extern "C" {
 void app_main(void);
@@ -40,8 +41,9 @@ LDM::BME680 bme680;
 
 #if CONFIG_CAMERA_SENSOR_ENABLED
 #include <camera.hpp>
-LDM::Camera camera = LDM::Camera(FRAMESIZE_QCIF, PIXFORMAT_JPEG, 10, 1);
-// LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 10, 1);
+// LDM::Camera camera = LDM::Camera(FRAMESIZE_QCIF, PIXFORMAT_JPEG, 10, 1);
+LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 10, 1);
+// LDM::Camera camera = LDM::Camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 10, 1);
 
 // LDM::Camera camera = LDM::Camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 50, 1);
 // LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 20, 1);
@@ -68,6 +70,9 @@ std::vector<LDM::Sensor*> sensors {
     &camera,
 #endif
 };
+
+uint8_t mac[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t ipv4[4] = {0xC0, 0xA8, 0x00, 0x67};
 
 #define DEFAULT_SSID CONFIG_WIFI_SSID
 #define DEFAULT_PWD CONFIG_WIFI_PASSWORD
@@ -151,6 +156,8 @@ void app_main(void) {
     // ble_dev.initBlufi(&w_config);
     ble_dev.initBlufi(&wifi_config);
     // ble_dev.initBlufi();
+
+    ble_dev.registerGattServerCallback(gatts_event_handler);
     g_ble = &ble_dev;
 
     LDM::HTTP_Server server(const_cast<char*>(""));
@@ -180,15 +187,16 @@ void app_main(void) {
     while(true) {
         // TODO: Handle disconnect/stopping server
         if(g_ble->wifi.isConnected() && !g_http_server->isStarted()) {
-        // if(!g_http_server->isStarted()) {
             g_http_server->startServer();
-            g_http_server->registerUriHandle(&uri_get);
-            g_http_server->registerUriHandle(&uri_post);
-            g_http_server->registerUriHandle(&uri_data);
-            g_http_server->registerUriHandle(&uri_get_camera);
-            g_http_server->registerUriHandle(&uri_post_config);
-            g_http_server->registerUriHandle(&uri_options_config);
-            g_http_server->registerUriHandle(&uri_get_stream);
+            if(g_http_server->isStarted()) {
+                g_http_server->registerUriHandle(&uri_get);
+                g_http_server->registerUriHandle(&uri_post);
+                g_http_server->registerUriHandle(&uri_data);
+                g_http_server->registerUriHandle(&uri_get_camera);
+                g_http_server->registerUriHandle(&uri_post_config);
+                g_http_server->registerUriHandle(&uri_options_config);
+                g_http_server->registerUriHandle(&uri_get_stream);
+            }
         }
 
         if(json_data != NULL) {
@@ -208,9 +216,11 @@ void app_main(void) {
                is_camera_led_flash_enabled) {
                 gpio_set_level(LED_GPIO, 0);
             }
-            cJSON *sensor_json = sensor->buildJson();
-            cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
-            sensor->releaseData();
+            if(std::strcmp(sensor->getSensorName(), "Camera") != 0) {
+                cJSON *sensor_json = sensor->buildJson();
+                cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
+                sensor->releaseData();
+            }
 
             // char* sensor_out = cJSON_Print(sensor_json);
             // printf("%s\n", sensor_out);

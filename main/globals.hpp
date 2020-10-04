@@ -36,6 +36,9 @@ extern LDM::HTTP_Client *g_http_client;
 extern LDM::System *g_system;
 extern LDM::NVS *g_nvs;
 
+extern uint8_t mac[6];
+extern uint8_t ipv4[4];
+
 // led parameters
 extern uint16_t led_fade_time;
 extern uint16_t led_duty;
