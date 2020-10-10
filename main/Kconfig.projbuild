@@ -1,4 +1,4 @@
-menu "Nightgown Setup"
+menu "Loincloth Setup"
   config ESP_POST_ENDPOINT
   string "HTTP POST Endpoint"
   default "https://ldm-nodered.herokuapp.com/esp32"

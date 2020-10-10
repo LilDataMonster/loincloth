@@ -1,0 +1,81 @@
+language: c
+os: linux
+
+jobs:
+  include:
+    - stage: build
+      name: "Compile source with build tools with DHT11 for ESP32"
+      services:
+        - docker
+      before_install:
+        - docker pull espressif/idf
+      script:
+        - git clone https://github.com/Kanaderu/esp-idf-lib $HOME/esp-idf-lib
+        - echo "CONFIG_DHT11_SENSOR_ENABLED=y" >> sdkconfig.defaults
+        - echo "CONFIG_CAMERA_SENSOR_ENABLED=y" >> sdkconfig.defaults
+        - echo "CONFIG_CAMERA_MODEL_HUZZAH32=y" >> sdkconfig.defaults
+        - >
+          docker run --rm
+          -e LC_ALL=C.UTF-8
+          -e IDF_LIB_PATH=/esp-lib
+          -v $HOME/esp-idf-lib:/esp-lib
+          -v $PWD:/project
+          -w /project
+          espressif/idf idf.py set-target esp32
+        - >
+          docker run --rm
+          -e LC_ALL=C.UTF-8
+          -e IDF_LIB_PATH=/esp-lib
+          -v $HOME/esp-idf-lib:/esp-lib
+          -v $PWD:/project
+          -w /project
+          espressif/idf idf.py -p /dev/ttyUSB0 build
+    - name: "Compile source with build tools with BME680 for ESP32"
+      services:
+        - docker
+      before_install:
+        - docker pull espressif/idf
+      script:
+        - git clone https://github.com/Kanaderu/esp-idf-lib $HOME/esp-idf-lib
+        - echo "CONFIG_BME680_SENSOR_ENABLED=y" >> sdkconfig.defaults
+        - echo "CONFIG_CAMERA_SENSOR_ENABLED=y" >> sdkconfig.defaults
+        - echo "CONFIG_CAMERA_MODEL_HUZZAH32=y" >> sdkconfig.defaults
+        - >
+          docker run --rm
+          -e LC_ALL=C.UTF-8
+          -e IDF_LIB_PATH=/esp-lib
+          -v $HOME/esp-idf-lib:/esp-lib
+          -v $PWD:/project
+          -w /project
+          espressif/idf idf.py set-target esp32
+        - >
+          docker run --rm
+          -e LC_ALL=C.UTF-8
+          -e IDF_LIB_PATH=/esp-lib
+          -v $HOME/esp-idf-lib:/esp-lib
+          -v $PWD:/project
+          -w /project
+          espressif/idf idf.py -p /dev/ttyUSB0 build
+
+#    - stage: deployment
+#      name: "Deploy GitHub Pages Documentation"
+#      if: branch = master # run job only on master
+#      language: node_js
+#      node_js:
+#        - 12
+#      before_script:
+#        - cd docs/
+#        - yarn install
+#      script:
+#        - yarn run deploy
+#      deploy:
+#        provider: pages
+#        skip_cleanup: true
+#        github_token: $GITHUB_TOKEN
+#        local_dir: docs/public
+#        on:
+#          branch: master
+#
+#notifications:
+#  slack:
+#    secure: WQxL8FoIr6RygoMcvLywCquoDB5uRYsOHZ/kGa69fWk5lgSw0lgd6yAiTTwMsx4GOQVIADHCSnshPyYVGwII65KNBhdrDmLXoyouzUv5qFwydB3hXNuk4ObAO9RIlsz9kRDbA2rKd54IhHarCV+YcAtZschvOdUTcCCrIReU5MwAv/9dRu0WBT8U4WuErXV3fa6FR8lDgDObLXdzow+VuEKK+GtCfT3iy8CPRF20KzdE9WW4jfo89jhE2JeRQ2bhxxEMCNKbhPEUWGKUJC8CP5zku5yTwvFSVDqOYpTyPo8lKPCOyhA8FLcF58Mxj7BwQxrxWaIbKxRWZDIgEjcxWMOyq2wNf1rro2bj0k874l8sT45owQpBZmDHKqfBe3Kjw8E4Y7uUk00BgI9UrrpeDcZL2bUDGuTEuvZ3qVbbQGdHkxYU9GKZ4GdCZtzcAuK4Jo41Id9ZYVlQSeqWktpzoXDWGK5ev6jvxHq4O1zaGhkRV6lr4KeLvytfJnnQy9J7NdP9MXJ/LZ1v6ZpC7KmgL8aN+Ic9hh1AdKyigdsQz62WyJ6JCGzXGLdZKjr3xz4+O3VsW3Wd8cSezjUYT+bMTSGxF1ziPgTThXSUWxruCesrhD1SU8R/8vJWCnuVlzYQnrhQ88caA3O5IXYe1YfZSeTq4bRCWbPhpCR+VgtVjUA=
