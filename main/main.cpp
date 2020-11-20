@@ -52,7 +52,6 @@ LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 10, 1);
 #endif
 
 // define extern variables
-cJSON * json_system = NULL;
 LDM::NVS *g_nvs = NULL;
 LDM::BLE *g_ble = NULL;
 LDM::HTTP_Server *g_http_server = NULL;
@@ -119,12 +118,6 @@ void app_main(void) {
 
     // setup MAC for broadcasting
     err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
-
-    json_system = cJSON_CreateObject();
-
-    LDM::System system;
-    cJSON *system_json = system.buildJson();
-    cJSON_AddItemToObject(json_data, APP_TAG, system_json);
 
     // if(mode == BoardMode::setup) {
     //     ESP_LOGI(APP_TAG, "Board in setup mode");
@@ -201,6 +194,11 @@ void app_main(void) {
             json_data = NULL;
         }
         json_data = cJSON_CreateObject();
+
+        LDM::System system;
+        cJSON *system_json = system.buildJson();
+        cJSON_AddItemToObject(json_data, APP_TAG, system_json);
+
         for(auto const& sensor : sensors) {
             ESP_LOGI(APP_MAIN, "Reading Sensor: %s", sensor->getSensorName());
             if(std::strcmp(sensor->getSensorName(), "Camera") == 0 && is_camera_led_flash_enabled) {
