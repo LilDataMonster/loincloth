@@ -32,11 +32,13 @@ void app_main(void);
 #if CONFIG_DHT_SENSOR_ENABLED
 #include <dht.hpp>
 LDM::DHT dht;
+float dht_data[2] = {0.0f, 0.0f};
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
 #include <bme680.hpp>
 LDM::BME680 bme680;
+float bme680_data[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 #endif
 
 #if CONFIG_CAMERA_SENSOR_ENABLED
@@ -221,6 +223,20 @@ void app_main(void) {
             // printf("%s\n", sensor_out);
             // free(sensor_out);
         }
+
+#if CONFIG_DHT_SENSOR_ENABLED
+        err = bleUpdateDht();
+        if(err != ESP_OK) {
+            ESP_LOGE(APP_MAIN, "Unable to update DHT Bluetooth characteristic");
+        }
+#endif
+
+#if CONFIG_BME680_SENSOR_ENABLED
+        err = bleUpdateBme680();
+        if(err != ESP_OK) {
+            ESP_LOGE(APP_MAIN, "Unable to update BME680 Bluetooth characteristic");
+        }
+#endif
 
         if(g_nvs != NULL) {
             // get current wifi config

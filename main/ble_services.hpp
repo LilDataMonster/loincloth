@@ -1,6 +1,7 @@
 #ifndef BLE_SERVICE
 #define BLE_SERVICE
 
+#include <globals.hpp>
 #include <esp_gatts_api.h>
 
 
@@ -13,6 +14,12 @@
 static const uint32_t GATTS_SERVICE_UUID_LDM       = 0x4C444D00;
 static const uint16_t GATTS_CHAR_UUID_MAC          = 0x4D01;
 static const uint16_t GATTS_CHAR_UUID_IPV4         = 0x4D02;
+#if CONFIG_DHT_SENSOR_ENABLED
+static const uint16_t GATTS_CHAR_UUID_DHT          = 0x4D03;
+#endif
+#if CONFIG_BME680_SENSOR_ENABLED
+static const uint16_t GATTS_CHAR_UUID_BME680       = 0x4D04;
+#endif
 
 static const uint16_t primary_service_uuid         = ESP_GATT_UUID_PRI_SERVICE;
 static const uint16_t character_declaration_uuid   = ESP_GATT_UUID_CHAR_DECLARE;
@@ -24,6 +31,14 @@ static const uint8_t char_prop_read_write_notify   = ESP_GATT_CHAR_PROP_BIT_WRIT
 void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 esp_err_t bleUpdateIpv4(void);
 
+#if CONFIG_DHT_SENSOR_ENABLED
+esp_err_t bleUpdateDht(void);
+#endif
+
+#if CONFIG_BME680_SENSOR_ENABLED
+esp_err_t bleUpdateBme680(void);
+#endif
+
 /* Attributes State Machine */
 enum {
     LDM_IDX_SVC,
@@ -33,6 +48,16 @@ enum {
 
     LDM_IPV4_CHAR,
     LDM_IPV4_VAL,
+
+#if CONFIG_DHT_SENSOR_ENABLED
+    LDM_DHT_CHAR,
+    LDM_DHT_VAL,
+#endif
+
+#if CONFIG_BME680_SENSOR_ENABLED
+    LDM_BME680_CHAR,
+    LDM_BME680_VAL,
+#endif
 
     LDM_IDX_NB
 };

@@ -45,6 +45,32 @@ const esp_gatts_attr_db_t gatt_db[LDM_IDX_NB] = {
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_IPV4, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
       GATTS_LDM_CHAR_VAL_LEN_MAX, sizeof(ipv4), (uint8_t *)&ipv4}},
 
+//-----------------------
+#if CONFIG_DHT_SENSOR_ENABLED
+    /* Characteristic Declaration */
+    [LDM_DHT_CHAR]      =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
+      sizeof(uint8_t), sizeof(uint8_t), (uint8_t *)&char_prop_read}},
+
+    /* Characteristic Value */
+    [LDM_DHT_VAL]  =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_DHT, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
+      GATTS_LDM_CHAR_VAL_LEN_MAX, sizeof(dht_data), (uint8_t *)&dht_data}},
+#endif
+
+//-----------------------
+#if CONFIG_BME680_SENSOR_ENABLED
+    /* Characteristic Declaration */
+    [LDM_BME680_CHAR]      =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
+    sizeof(uint8_t), sizeof(uint8_t), (uint8_t *)&char_prop_read}},
+
+    /* Characteristic Value */
+    [LDM_BME680_VAL]  =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_BME680, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
+    GATTS_LDM_CHAR_VAL_LEN_MAX, sizeof(bme680_data), (uint8_t *)&bme680_data}},
+#endif
+
 };
 
 struct gatts_profile_inst {
@@ -70,6 +96,41 @@ esp_err_t bleUpdateIpv4(void) {
     }
     return err;
 }
+
+#if CONFIG_DHT_SENSOR_ENABLED
+esp_err_t bleUpdateDht(void) {
+    dht_data[0] = dht.getHumidity();
+    dht_data[1] = dht.getTemperature();
+    esp_err_t err = esp_ble_gatts_set_attr_value(gatt_handle_table[3], sizeof(dht_data), (uint8_t*)dht_data);
+    if(err != ESP_OK) {
+        ESP_LOGE(BLE_SERVICE_TAG, "Failed to send GATTS Attribute on handle %d : %s",
+                                  gatt_handle_table[3], esp_err_to_name(err));
+    }
+    return err;
+}
+#endif
+
+#if CONFIG_BME680_SENSOR_ENABLED
+esp_err_t bleUpdateBme680(void) {
+    bme680_data[0] = bme680.getHumidity();
+    bme680_data[1] = bme680.getTemperature();
+    bme680_data[2] = bme680.getPressure();
+    bme680_data[3] = bme680.getGas();
+
+#if CONFIG_DHT_SENSOR_ENABLED
+    #define BME680_HANDLE_INDEX 4
+#else
+    #define BME680_HANDLE_INDEX 3
+#endif
+
+    esp_err_t err = esp_ble_gatts_set_attr_value(gatt_handle_table[BME680_HANDLE_INDEX], sizeof(bme680_data), (uint8_t*)bme680_data);
+    if(err != ESP_OK) {
+        ESP_LOGE(BLE_SERVICE_TAG, "Failed to send GATTS Attribute on handle %d : %s",
+                                  gatt_handle_table[BME680_HANDLE_INDEX], esp_err_to_name(err));
+    }
+    return err;
+}
+#endif
 
 void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 					esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
