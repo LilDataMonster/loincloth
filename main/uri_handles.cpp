@@ -150,6 +150,7 @@ httpd_uri_t uri_data = {
 // }
 
 esp_err_t jpg_get_image_handler(httpd_req_t *req) {
+#if CONFIG_CAMERA_SENSOR_ENABLED
     // camera_fb_t * fb = NULL;
     esp_err_t res = ESP_OK;
     size_t fb_len = 0;
@@ -198,6 +199,9 @@ esp_err_t jpg_get_image_handler(httpd_req_t *req) {
     int64_t fr_end = esp_timer_get_time();
     ESP_LOGI(TAG, "JPG: %uKB %ums", (uint32_t)(fb_len/1024), (uint32_t)((fr_end - fr_start)/1000));
     return res;
+#else
+    return ESP_OK;
+#endif
 }
 
 httpd_uri_t uri_get_camera = {
@@ -241,9 +245,10 @@ esp_err_t config_post_handler(httpd_req_t *req) {
     }
     buf[total_len] = '\0';
 
-    sensor_t *s = camera.getSensor();
-
     cJSON *root = cJSON_Parse(buf);
+
+#if CONFIG_CAMERA_SENSOR_ENABLED
+    sensor_t *s = camera.getSensor();
 
     // configure camera
     cJSON *camera_json = cJSON_GetObjectItemCaseSensitive(root, "camera");
@@ -277,6 +282,7 @@ esp_err_t config_post_handler(httpd_req_t *req) {
     } else {
         ESP_LOGI(TAG, "Camera Configuration Not Found");
     }
+#endif
 
     // configure led
     cJSON *led_json = cJSON_GetObjectItemCaseSensitive(root, "led");
@@ -385,6 +391,7 @@ static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" 
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
 static const char* _STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
 esp_err_t jpg_get_stream_handler(httpd_req_t *req) {
+#if CONFIG_CAMERA_SENSOR_ENABLED
     // camera_fb_t * fb = NULL;
     esp_err_t res = ESP_OK;
     size_t _jpg_buf_len;
@@ -454,6 +461,9 @@ esp_err_t jpg_get_stream_handler(httpd_req_t *req) {
 
     last_frame = 0;
     return res;
+#else
+    return ESP_OK;
+#endif
 }
 
 httpd_uri_t uri_get_stream = {
