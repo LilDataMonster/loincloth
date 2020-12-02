@@ -1,0 +1,10 @@
+# Sidebar navigation
+
+- label: 'Introduction'
+  link: '/'
+- label: Usage
+  items:
+    - label: 'Getting Started'
+      link: '/usage/getting-started'
+    - label: 'Device Operation'
+      link: '/usage/operation'

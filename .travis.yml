@@ -58,25 +58,25 @@ jobs:
 #          -w /project
 #          espressif/idf idf.py -p /dev/ttyUSB0 build
 
-#    - stage: deployment
-#      name: "Deploy GitHub Pages Documentation"
-#      if: branch = master # run job only on master
-#      language: node_js
-#      node_js:
-#        - 12
-#      before_script:
-#        - cd docs/
-#        - yarn install
-#      script:
-#        - yarn run deploy
-#      deploy:
-#        provider: pages
-#        skip_cleanup: true
-#        github_token: $GITHUB_TOKEN
-#        local_dir: docs/public
-#        on:
-#          branch: master
-#
-#notifications:
-#  slack:
-#    secure: WQxL8FoIr6RygoMcvLywCquoDB5uRYsOHZ/kGa69fWk5lgSw0lgd6yAiTTwMsx4GOQVIADHCSnshPyYVGwII65KNBhdrDmLXoyouzUv5qFwydB3hXNuk4ObAO9RIlsz9kRDbA2rKd54IhHarCV+YcAtZschvOdUTcCCrIReU5MwAv/9dRu0WBT8U4WuErXV3fa6FR8lDgDObLXdzow+VuEKK+GtCfT3iy8CPRF20KzdE9WW4jfo89jhE2JeRQ2bhxxEMCNKbhPEUWGKUJC8CP5zku5yTwvFSVDqOYpTyPo8lKPCOyhA8FLcF58Mxj7BwQxrxWaIbKxRWZDIgEjcxWMOyq2wNf1rro2bj0k874l8sT45owQpBZmDHKqfBe3Kjw8E4Y7uUk00BgI9UrrpeDcZL2bUDGuTEuvZ3qVbbQGdHkxYU9GKZ4GdCZtzcAuK4Jo41Id9ZYVlQSeqWktpzoXDWGK5ev6jvxHq4O1zaGhkRV6lr4KeLvytfJnnQy9J7NdP9MXJ/LZ1v6ZpC7KmgL8aN+Ic9hh1AdKyigdsQz62WyJ6JCGzXGLdZKjr3xz4+O3VsW3Wd8cSezjUYT+bMTSGxF1ziPgTThXSUWxruCesrhD1SU8R/8vJWCnuVlzYQnrhQ88caA3O5IXYe1YfZSeTq4bRCWbPhpCR+VgtVjUA=
+    - stage: deployment
+      name: "Deploy GitHub Pages Documentation"
+      if: branch = master # run job only on master
+      language: node_js
+      node_js:
+        - 12
+      before_script:
+        - cd docs/
+        - yarn install
+      script:
+        - yarn run deploy
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        github_token: $GITHUB_TOKEN
+        local_dir: docs/public
+        on:
+          branch: master
+
+notifications:
+  slack:
+    secure: dRLWjbtycg5vC55vn733YUHsbldyplYVheFpS3XZ0DHgsbRoeITZ1tN8uLFptr8boqiIOwnhgwV7xRwb6LdB4ZsrHzQ3F/t5cElb0yJ1LMTbzeKYXiOb3gLiORYYIjRoUlCA4VkmTJ+P6EMAA7t+bz6uKMKm9qprVub+T/E2mD4SStMOqw4AekFrlbzNyeB6dp6lFS9BKNH1i2mbJAkrGVGz9TM/Hc3KTfd21QzRMBcnQd1UkL/SgSqrqkF7qe8y6EnXzIOHo6RuCXPAhqty4w9M6qQ/ksww7VmlWKBsLnaDK73B+/Q4aIL+H3b1+phAVdqeChWiA58eXmJJHBPSWrp5bg+1QeaCRHP6q4GRykSiWCrGX/+8KvdbLABnvGGQhkQ2hXh7Zd57tAi7xqgRSsYRzP6NrY3mjv4dw9LSUtG6/snQAmfDAFdvWBhVk9ilQXKDpyR2ogQotUO1Uv0g5Syctb2oqJlO/WpBnRMnataHxcbM+hrAUORDisWPZLYeTGm8xebXrSCKtEkoGQ0fJZ1FqVw7jkUnLuyTeIVzd45cVpZzRdctNEy347SYUy0okxvDUV1gnUENUxjyeAQQjyFLIW5CNozS7qXT5N4TYVZ/SHrwfWHBzLrYu+qVONI5DcNAN/1+PivGS9b7mlNh29/EWuiSUn1oOHzvZecQEU8=
