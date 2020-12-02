@@ -13,13 +13,11 @@
 #if CONFIG_DHT_SENSOR_ENABLED
 #include <dht.hpp>
 extern LDM::DHT dht;
-extern float dht_data[2];
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
 #include <bme680.hpp>
 extern LDM::BME680 bme680;
-extern float bme680_data[4];
 #endif
 
 #if CONFIG_CAMERA_SENSOR_ENABLED

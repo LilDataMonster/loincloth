@@ -45,6 +45,7 @@ uint16_t led_duty = 4000;
 // #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1))
 void led_on_off_task(void *pvParameters) {
 
+    // setup LED configuration via GPIO pin
     gpio_config_t io_conf;
     io_conf.intr_type = GPIO_INTR_DISABLE; //disable interrupt
     io_conf.mode = GPIO_MODE_OUTPUT; //set as output mode
@@ -53,19 +54,24 @@ void led_on_off_task(void *pvParameters) {
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE; //disable pull-up mode
     gpio_config(&io_conf); //configure GPIO with the given settings
 
-    // int32_t level = 0;
     while(true) {
+        // set GPIO level
         gpio_set_level(LED_GPIO, led_on%2);
+
+        // print status
         ESP_LOGI("LDM:LED", "LED: %d, Period Enabled: %s, Period: %u ms",
                   led_on%2, (is_period_enabled?"True":"False"), led_period_ms);
-        // led_on += 1;
-        // vTaskDelay(pdMS_TO_TICKS(10000));
+
+        // bit flip LSB on GPIO pin output (if on/off flashing is enabled)
         led_on += is_period_enabled ? 1 : 0;
+
+        // sleep
         vTaskDelay(pdMS_TO_TICKS(led_period_ms));
     }
 }
 
 void led_fade_task(void *pvParameters) {
+    // set LED clock
     ledc_timer_config_t ledc_timer;
     ledc_timer.duty_resolution = LEDC_TIMER_13_BIT; // resolution of PWM duty
     ledc_timer.freq_hz = 5000;                      // frequency of PWM signal
@@ -73,6 +79,7 @@ void led_fade_task(void *pvParameters) {
     ledc_timer.timer_num = LEDC_TIMER_1;            // timer index
     ledc_timer.clk_cfg = LEDC_AUTO_CLK;             // Auto select the source clock
 
+    // set LED configufation
     ledc_channel_config_t backlight;
     backlight.channel    = LEDC_CHANNEL_0;
     backlight.duty       = 0;
@@ -81,11 +88,13 @@ void led_fade_task(void *pvParameters) {
     backlight.hpoint     = 0;
     backlight.timer_sel  = LEDC_TIMER_1;
 
+    // initialize LED
     LDM::LED led;
     led.configLedTimer(ledc_timer);
     led.addLedChannelConfig(backlight);
     led.init();
 
+    // fade LED at different rates
     while(1) {
         led.fadeLedWithTime(0);
         vTaskDelay(led_fade_time / portTICK_PERIOD_MS);
@@ -102,26 +111,35 @@ void led_fade_task(void *pvParameters) {
 }
 
 
+// TODO: Move sensor task code from main.cpp to tasks.cpp (heap allocation issue for large camera image buffers)
 #define SENSOR_TASK_LOG "SENSOR_TASK"
 void sensor_task(void *pvParameters) {
-// void sensor_task(std::vector<LDM::Sensor>& sensors) {
 
+    // recast array to vector of sensors
     std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
 
+    // initialize sensors
     for(auto const& sensor : *sensors) {
         ESP_LOGI(SENSOR_TASK_LOG, "Initializing Sensor: %s", sensor->getSensorName());
         sensor->init();
     }
 
     while(true){
+        // create JSON data to store output
         if(json_data != NULL) {
             cJSON_Delete(json_data);
             json_data = NULL;
         }
         json_data = cJSON_CreateObject();
+
+        // loop through sensors and collect sensor data
         for(auto const& sensor : *sensors) {
             ESP_LOGI(SENSOR_TASK_LOG, "Reading Sensor: %s", sensor->getSensorName());
+
+            // read sensor
             sensor->readSensor();
+
+            // create JSON data containing sensor information
             cJSON *sensor_json = sensor->buildJson();
             cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
             sensor->releaseData();
@@ -136,30 +154,6 @@ void sensor_task(void *pvParameters) {
         // vTaskDelay(2000 / portTICK_PERIOD_MS);
         vTaskDelay(pdMS_TO_TICKS(30000));
     }
-
-    // if(pvParameters == NULL) {
-    //     ESP_LOGE(SENSOR_TASK_LOG, "Invalid Sensor Recieved");
-    //     return;
-    // }
-    //
-    // std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
-    //
-    // for(auto const& sensor : *sensors) {
-    //     if(sensor->init() != ESP_OK) {
-    //         ESP_LOGE(SENSOR_TASK_LOG, "Failed to initialize sensor");
-    //         return;
-    //     }
-    // }
-    //
-    // while(true){
-    //     for(auto const& sensor : *sensors) {
-    //         sensor->readSensor();
-    //     }
-    //     // If you read the sensor data too often, it will heat up
-    //     // http://www.kandrsmith.org/RJS/Misc/Hygrometers/dht_sht_how_fast.html
-    //     // vTaskDelay(2000 / portTICK_PERIOD_MS);
-    //     vTaskDelay(pdMS_TO_TICKS(10000));
-    // }
 }
 
 #define HTTP_POST_ENDPOINT CONFIG_ESP_POST_ENDPOINT
@@ -173,6 +167,7 @@ void http_task(void *pvParameters) {
     char* endpoint_url = NULL;
     size_t endpoint_url_size = 0;
 
+    // pull HTTP Post destination from NVS memory else use default location (defined by kconfig)
     // check key and get url size if it exists
     if(g_nvs != NULL) {
         g_nvs->openNamespace("url");
@@ -197,6 +192,7 @@ void http_task(void *pvParameters) {
         ESP_LOGI(HTTP_TASK_LOG, "No NVS found when fetching Post URL from NVS, setting to default: %s", endpoint_url);
     }
 
+    // initialize HTTP client
     LDM::HTTP_Client http(endpoint_url);
     g_http_client = &http;
 
@@ -208,18 +204,19 @@ void http_task(void *pvParameters) {
     while(true) {
         if(g_ble->wifi.isConnected()) {
             if(json_data != NULL) {
+
+                // POST JSON data
+                http.postJSON(json_data);
+
                 // char* post_data = cJSON_Print(json_data);
                 // ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
-
-                // // POST
-                http.postJSON(json_data);
                 // http.postFormattedJSON(post_data);
                 // free(post_data);
             } else {
                 ESP_LOGI(HTTP_TASK_LOG, "SENSOR_JSON value is NULL");
             }
 #ifdef CONFIG_OTA_ENABLED
-            // check OTA updates
+            // check for OTA updates
             ota.checkUpdates(true);
 #endif
         } else {
@@ -227,9 +224,9 @@ void http_task(void *pvParameters) {
         }
         vTaskDelay(pdMS_TO_TICKS(30000));
     }
-    // // // cleanup JSON message
-    // // cJSON_Delete(message);
-    // // message = NULL;
+    // // cleanup JSON message
+    // cJSON_Delete(message);
+    // message = NULL;
 
     // vEventGroupDelete(s_wifi_event_group);
     // wifi.deinit_sta();
@@ -241,10 +238,14 @@ void http_task(void *pvParameters) {
 
 #define SLEEP_TASK_LOG "SLEEP_TASK"
 void sleep_task(void *pvParameters) {
+
+    // recast array to vector of sensors
     std::vector<LDM::Sensor*> const *sensors = reinterpret_cast<std::vector<LDM::Sensor*> const*>(pvParameters);
 
     while(true) {
+        // check if ready to go to sleep (aka message is finished sending)
         if(messageFinished) {
+          
             // deinitialize sensors
             for(auto const& sensor : *sensors) {
                 sensor->deinit();
@@ -256,44 +257,3 @@ void sleep_task(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(30000));
     }
 }
-
-// void blufi_task(void *pvParameters) {
-//     LDM::BLE ble_dev(const_cast<char*>("BLUFI_TEST"));
-//     ble_dev.init();
-//     ble_dev.setupDefaultBlufiCallback();
-//     ble_dev.initBlufi();
-//     g_ble = &ble_dev;
-//     while(true) {
-//         vTaskDelay(pdMS_TO_TICKS(1000));
-//     }
-// }
-
-#ifndef CONFIG_IDF_TARGET_ESP32S2
-#define BLE_TASK_LOG "BLE_TASK"
-void ble_task(void *pvParameters) {
-//     ESP_LOGI(BLE_TASK_LOG, "Starting BLE");
-//
-//     LDM::BLE ble("Nightgown");
-//     ble.init();
-// /*
-//     ble.setupCallback();
-//
-// #if CONFIG_DHT11_SENSOR_ENABLED
-//     // get sensor data
-//     //LDM::DHT* dht_sensor = (LDM::DHT*)pvParameters;
-//     LDM::DHT* p_dht_sensor = &dht_sensor;
-//
-//     uint8_t humidity = p_dht_sensor->getHumidity();
-//     uint8_t temperature = p_dht_sensor->getTemperature();
-//     ESP_LOGI(BLE_TASK_LOG, "Updating humidity: %d, temperature: %d", humidity, temperature);
-//     ble.updateValue(humidity, temperature);
-// #endif
-// */
-//
-//     // advertise BLE data for a while
-//     vTaskDelay(pdMS_TO_TICKS(BLE_ADVERTISE_DURATION * 1E3));
-//     ble.deinit();
-    messageFinished = true;
-    vTaskDelete(NULL);
-}
-#endif

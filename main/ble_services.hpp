@@ -4,7 +4,6 @@
 #include <globals.hpp>
 #include <esp_gatts_api.h>
 
-
 #define ESP_APP_ID                  0x55
 #define PROFILE_NUM                 1
 #define PROFILE_APP_IDX             0
@@ -33,10 +32,12 @@ esp_err_t bleUpdateIpv4(void);
 
 #if CONFIG_DHT_SENSOR_ENABLED
 esp_err_t bleUpdateDht(void);
+extern float dht_data[2];
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
 esp_err_t bleUpdateBme680(void);
+extern float bme680_data[4];
 #endif
 
 /* Attributes State Machine */
