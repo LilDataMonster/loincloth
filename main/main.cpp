@@ -133,7 +133,7 @@ void app_main(void) {
     // }
 
     // initialize bluetooth device
-    LDM::BLE ble_dev(const_cast<char*>("BLUFI_TEST"));
+    LDM::BLE ble_dev(const_cast<char*>(CONFIG_BLUETOOTH_DEVICE_NAME));
     ble_dev.init();                                           // initialize bluetooth
     ble_dev.setupDefaultBlufiCallback();                      // setup blufi configuration
     ble_dev.initBlufi(&wifi_config);                          // initialize blufi with given wifi configuration
