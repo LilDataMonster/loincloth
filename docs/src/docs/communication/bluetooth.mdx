@@ -1,0 +1,219 @@
+---
+title: 'Bluetooth Communication'
+metaTitle: 'Bluetooth Communication Page'
+metaDescription: 'Bluetooth Communication'
+---
+
+## Introduction
+
+Bluetooth on the device operates in two modes in accordance to the BLE standard, GAP and GATT modes. The GAP mode advertises the device such that it can be paired with. Once the device is paired with a client, the GATT mode exposes several characteristic attributes that contains device and sensor data. Currently, the IP address and MAC address of the device can be retrieved from the device. Additional characteristic attributes can be read that contains sensor data if the device was built with the device firmware (currently supports DHT and BME680 sensors).
+
+
+
+The documented setup here is used get a developer up and running quickly implement and deploy the Nightgown software stack onto a device. There are two setup methods to build and flash the ESP32 device which are listed below. The docker setup is the quickest method to setup the device if the user is fairly familiar with docker containers.
+
+1. [Docker Setup](#docker-setup)
+2. [Manual Setup](#manual-setup)
+
+Setting up the device in either methods requires performing the following steps:
+
+- Clone external library (used for interfacing with sensors)
+- Set target device (ESP32 or ESP32S2)
+- Configure device using `idf.py menuconfig` (configuration options described [here](#menu-configuration-options-idfpy-menuconfig))
+- Build, flash, and read device output (optional)
+
+---
+
+## Docker Setup
+
+The docker configuration has primarily been tested using a linux OS. The main convenience of using docker is not having the need to install the expressif framework manually, instead the build tools are within a docker container which can be pulled from DockerHub and exposing the device to the container as necessary.
+
+### Dependency Setup
+
+The following dependencies are required in order to compile and target the device.
+
+- ESP-IDF-LIB
+  - https://esp-idf-lib.readthedocs.io/en/latest/
+
+```bash
+# define location to store dependencies
+export WORKSPACE=$HOME
+
+# clone dependencies
+cd $WORKSPACE
+git clone https://github.com/UncleRus/esp-idf-lib.git
+
+# clone the project
+git clone https://github.com/LilDataMonster/nightgown.git
+cd nightgown
+```
+
+### Pull Build Tools
+
+Use the following command to pull the espressif build tools from DockerHub. Espressif documentation can be found [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-docker-image.html).
+
+```bash
+docker pull espressif/idf
+```
+
+### Running and Exposing the Container
+
+The container enables the use of a ready-made `idf.py` command but only within the docker container. Since the host does not have direct access to the container, specific pathways into the docker container will need to be exposed for it to be used. A short description of what each docker argument does is provided in the proceeding table. For more information about docker arguments and parameters, checkout the [Docker Reference Documentation](https://docs.docker.com/reference/).
+
+To expose the container to the host, a number of arguments are provided to docker:
+
+```bash
+docker run \
+        -it \
+        --rm \
+        --privileged \
+        --device /dev/ttyUSB0:/dev/ttyUSB0 \
+        -e LC_ALL=C.UTF-8 \
+        -e IDF_LIB_PATH=/esp-lib \
+        -v $WORKSPACE/esp-idf-lib:/esp-lib \
+        -v $WORKSPACE/nightgown:/project \
+        -w /project \
+        espressif/idf idf.py
+```
+
+| Docker Argument                 | Description                                                                                    |
+|---------------------------------|------------------------------------------------------------------------------------------------|
+| `-it`                           | Interactive mode, mainly for using with `menuconfig`                                           |
+| `--rm`                          | Remove the container when finished running the command                                         |
+| `--privileged`                  | Run as root to avoid permission issues (not particularly needed if permissions setup properly) |
+| `--device <host>:<container>`   | Map the device from the host path to a path in the container                                   |
+| `-e Key=Value`                  | Defines environment variables within the container                                             |
+| `-v <host>:<container>`         | Maps a directory from the host to a path in the container                                      |
+| `-w <container path>`           | Set working directory of container's path                                                      |
+
+
+Once the environment is setup, the steps from [Flashing the Device](#flashing-the-device) can be performed.
+
+---
+
+## Manual Setup
+
+### Dependency Setup
+
+The following dependencies are required in order to compile and target the device.
+
+- ESP-IDF
+  - https://docs.espressif.com/projects/esp-idf/en/latest/esp32/
+  - https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/
+- ESP-IDF-LIB
+  - https://esp-idf-lib.readthedocs.io/en/latest/
+
+To setup the development environment, the espressif build tools must be installed (see espressif's [Getting Started](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html) page). The ESP-IDF environment variables must be set:
+
+| Environment Variable | Description                                   |
+|----------------------|-----------------------------------------------|
+|`IDF_PATH`            | ESP-IDF path for the espressif build tools    |
+|`IDF_LIB_PATH`        | ESP-IDF-LIB path of the external library      |
+
+```bash
+# define location to store dependencies
+export WORKSPACE=$HOME
+
+# clone dependencies
+cd $WORKSPACE
+git clone https://github.com/espressif/esp-idf.git --recursive
+git clone https://github.com/UncleRus/esp-idf-lib.git
+
+# setup environment variables
+export IDF_PATH=$WORKSPACE/esp-idf
+
+bash $IDF_PATH/install.sh
+source $IDF_PATH/add_path.sh
+source $IDF_PATH/export.sh
+
+export IDF_LIB_PATH=$WORKSPACE/esp-idf-lib
+
+# clone the project
+git clone https://github.com/LilDataMonster/nightgown.git
+cd nightgown
+```
+
+Once the environment is setup, the steps from [Flashing the Device](#flashing-the-device) can be performed.
+
+---
+
+# Flashing the Device
+
+Flashing the device can be done using the following steps. The setup is the same for both Docker and the manual setup using the `idf.py` command. In the docker setup, the full `docker run` command must be used with all the appropriate arguments followed by `espressif/idf idf.py` and the corresponding commands below.
+
+For example, to run the commands detailed in [Flash and Monitor](#flash-and-monitor), use the following:
+
+```bash
+docker run \
+        -it \
+        --rm \
+        --privileged \
+        --device /dev/ttyUSB0:/dev/ttyUSB0 \
+        -e LC_ALL=C.UTF-8 \
+        -e IDF_LIB_PATH=/esp-lib \
+        -v $WORKSPACE/esp-idf-lib:/esp-lib \
+        -v $WORKSPACE/nightgown:/project \
+        -w /project \
+        espressif/idf idf.py -p /dev/ttyUSB0 flash monitor
+```
+
+## Set Target Device
+
+Before configuration of the build, setting a device target must be done to indicate what chip is being targeted for the build. The primary two options are the `ESP32` and the `ESP32-S2` device.
+
+To set the target device, run the following for the ESP32:
+
+```bash
+idf.py set-target esp32
+```
+
+For ESP32-S2 devices, run the following:
+
+```bash
+idf.py set-target esp32s2
+```
+
+## Configuration
+
+Configuration parameters can be defined using the ESP-IDF configuration menu by executing the following commands and modify custom project configurations within the menu.
+
+```bash
+idf.py menuconfig
+```
+
+## Build and Compile
+
+Building and compiling the code will begin creating the required binaries for the build and store them in the `build/` folder.
+
+To begin building the code run:
+
+```bash
+idf.py build
+```
+
+## Flash and Monitor
+
+To flash the build, find the serial location of the device on the host machine (`/dev/ttyUSB0` in this case) and run the `flash` command. Use the `monitor` command to read the serial output of the device. The baudrate is defined in the menu options discussed prior.
+
+```bash
+idf.py -p /dev/ttyUSB0 flash monitor
+```
+
+---
+
+## Menu Configuration Options (`idf.py menuconfig`)
+
+The `Monster Configuration` menu defines several parameters used for the software stack.
+
+| Menu Option          | Description      |
+|----------------------|------------------|
+| WiFi SSID            | WiFi SSID AP to connect to |
+| WiFi Password        | WiFi Password to connect to AP with |
+| WiFi listen interval | Number of intervals for station to listen to becon from AP |
+| Power Save Mode      | Power save mode for the ESP32 to use |
+| Max CPU Frequency    | Maximum CPU frequency to use for dynamic frequency scaling |
+| Min CPU Frequency    | Minimum CPU frequency to use for dynamic frequency scaling, should be set to a factor of XTAL frequency |
+| DHT11 GPIO Pin       | GPIO pin to read the DHT11 sensor |
+| HTTP POST Endpoint   | HTTP endpoint to post data |
+
+---
