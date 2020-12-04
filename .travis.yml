@@ -58,9 +58,9 @@ jobs:
 #          -w /project
 #          espressif/idf idf.py -p /dev/ttyUSB0 build
 
-    - stage: deployment
+#    - stage: deployment
       name: "Deploy GitHub Pages Documentation"
-      if: branch = master # run job only on master
+#      if: branch = master # run job only on master
       language: node_js
       node_js:
         - 12
