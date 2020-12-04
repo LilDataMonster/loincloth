@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 
-import logo from '../../../../static/nightgown.svg'
+import logo from '../../../../static/loincloth.svg'
 
 export default styled.div`
   width: 280px;
