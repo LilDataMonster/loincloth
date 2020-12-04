@@ -8,3 +8,11 @@
       link: '/usage/getting-started'
     - label: 'Device Operation'
       link: '/usage/operation'
+- label: Communication
+  items:
+    - label: 'Bluetooth'
+      link: '/communication/bluetooth'
+    - label: 'HTTP REST'
+      link: '/communication/http-rest'
+    - label: 'XBee'
+      link: '/communication/xbee'
