@@ -6,7 +6,7 @@ metaDescription: 'Getting Started'
 
 ## Introduction
 
-The documented setup here is used get a developer up and running quickly implement and deploy the Nightgown software stack onto a device. There are two setup methods to build and flash the ESP32 device which are listed below. The docker setup is the quickest method to setup the device if the user is fairly familiar with docker containers.
+The documented setup here is used get a developer up and running quickly implement and deploy the Loincloth software stack onto a device. There are two setup methods to build and flash the ESP32 device which are listed below. The docker setup is the quickest method to setup the device if the user is fairly familiar with docker containers.
 
 1. [Docker Setup](#docker-setup)
 2. [Manual Setup](#manual-setup)
@@ -40,8 +40,8 @@ cd $WORKSPACE
 git clone https://github.com/UncleRus/esp-idf-lib.git
 
 # clone the project
-git clone https://github.com/LilDataMonster/nightgown.git
-cd nightgown
+git clone https://github.com/LilDataMonster/loincloth.git
+cd loincloth
 ```
 
 ### Pull Build Tools
@@ -67,7 +67,7 @@ docker run \
         -e LC_ALL=C.UTF-8 \
         -e IDF_LIB_PATH=/esp-lib \
         -v $WORKSPACE/esp-idf-lib:/esp-lib \
-        -v $WORKSPACE/nightgown:/project \
+        -v $WORKSPACE/loincloth:/project \
         -w /project \
         espressif/idf idf.py
 ```
@@ -125,8 +125,8 @@ source $IDF_PATH/export.sh
 export IDF_LIB_PATH=$WORKSPACE/esp-idf-lib
 
 # clone the project
-git clone https://github.com/LilDataMonster/nightgown.git
-cd nightgown
+git clone https://github.com/LilDataMonster/loincloth.git
+cd loincloth
 ```
 
 Once the environment is setup, the steps from [Flashing the Device](#flashing-the-device) can be performed.
@@ -148,7 +148,7 @@ docker run \
         -e LC_ALL=C.UTF-8 \
         -e IDF_LIB_PATH=/esp-lib \
         -v $WORKSPACE/esp-idf-lib:/esp-lib \
-        -v $WORKSPACE/nightgown:/project \
+        -v $WORKSPACE/loincloth:/project \
         -w /project \
         espressif/idf idf.py -p /dev/ttyUSB0 flash monitor
 ```

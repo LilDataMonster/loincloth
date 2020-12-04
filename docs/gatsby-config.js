@@ -1,10 +1,10 @@
 module.exports = {
   siteMetadata: {
-    siteTitle: `Lil Data Monster - Nightgown`,
-    defaultTitle: `Lil Data Monster - Nightgown`,
-    siteTitleShort: `Nightgown`,
-    siteDescription: `The Lil Data Monster Nightgown software stack`,
-    siteUrl: `https://lildatamonster.github.io/nightgown/`,
+    siteTitle: `Lil Data Monster - Loincloth`,
+    defaultTitle: `Lil Data Monster - Loincloth`,
+    siteTitleShort: `Loincloth`,
+    siteDescription: `The Lil Data Monster Loincloth software stack`,
+    siteUrl: `https://lildatamonster.github.io/loincloth/`,
     siteAuthor: `David Fan`,
     siteImage: `/banner.png`,
     siteLanguage: `en`,
@@ -13,22 +13,22 @@ module.exports = {
     footer: `Lil Data Monster`,
   },
   // prefix path for github pages
-  pathPrefix: "/nightgown",
+  pathPrefix: "/loincloth",
   plugins: [
     {
       resolve: `@rocketseat/gatsby-theme-docs`,
       options: {
         configPath: `src/config`,
         docsPath: `src/docs`,
-        githubUrl: `https://github.com/LilDataMonster/nightgown`,
+        githubUrl: `https://github.com/LilDataMonster/loincloth`,
         baseDir: `docs`,
       },
     },
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `Nightgown`,
-        short_name: `Nightgown`,
+        name: `Loincloth`,
+        short_name: `Loincloth`,
         start_url: `/`,
         background_color: `#ffffff`,
         display: `standalone`,
@@ -45,7 +45,7 @@ module.exports = {
     {
       resolve: `gatsby-plugin-canonical-urls`,
       options: {
-        siteUrl: `https://lildatamonster.github.io/nightgown/`,
+        siteUrl: `https://lildatamonster.github.io/loincloth/`,
       },
     },
     `gatsby-plugin-offline`,
