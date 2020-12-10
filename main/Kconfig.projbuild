@@ -24,4 +24,11 @@ menu "Loincloth Setup"
   help
       Advertising BLE Duration in seconds.
 
+# Zigbee Configuration
+config ZIGBEE_ENABLED
+    bool "Enable Zigbee Transmission"
+    default False
+    help
+        Enable Zigbee.
+
 endmenu
