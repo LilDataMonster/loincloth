@@ -8,6 +8,14 @@
       link: '/usage/getting-started'
     - label: 'Device Operation'
       link: '/usage/operation'
+- label: Development
+  items:
+    - label: 'Getting Started'
+      link: '/development/getting-started'
+    - label: 'Code Features'
+      link: '/development/code-features'
+    - label: 'Adding Sensors'
+      link: '/development/adding-sensors'
 - label: Communication
   items:
     - label: 'Bluetooth'

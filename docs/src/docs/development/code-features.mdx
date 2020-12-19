@@ -1,0 +1,35 @@
+---
+title: 'Code Features'
+metaTitle: 'Code Features'
+metaDescription: 'Code Features'
+---
+
+## Introduction
+
+[LDM-LIB](https://github.com/LilDataMonster/ldm-lib/) provides system support with ESP-IDF as a wrapper to many of the Espressif core library calls. [LDM-Sensor](https://github.com/LilDataMonster/ldm-sensors) provides sensor support to initialize and read/generate data from any sensors.
+
+## LDM-LIB Feature Support
+
+The LDM-LIB supported features are listed below which are wrappers into the core ESP-IDF library.
+
+| Feature       | Description                                                          |
+|---------------|----------------------------------------------------------------------|
+| Bluetooth     | Support for bluetooth                                                |
+| HTTP Client   | Support for sending and connecting HTTP message to external services |
+| HTTP Server   | Support for hosting an HTTP server                                   |
+| LED           | Support for control LED lights                                       |
+| NVS           | Support for handling Non-Volatile Storage                            |
+| OTA           | Support for Over-The-Air updates                                     |
+| Sleep         | Support for device sleep                                             |
+| System        | Support for system management                                        |
+| Wifi          | Support for setting up wifi                                          |
+
+## LDM-Sensor Feature Support
+
+[LDM-Sensors](https://github.com/LilDataMonster/ldm-sensors) provides sensor support to be used with the ESP-IDF as a library. The repository leverages the [LDM-ESP-LIB](https://github.com/UncleRus/esp-idf-lib) which contains support for a variety of sensors for the Espressif devices. The [ESP32-Camera](https://github.com/espressif/esp32-camera) driver is utilized for interfacing with camera sensors. Camera support provides a set of macros to support the pinouts for multiple common ESP devices.
+
+| Feature       | Description                                                                  |
+|---------------|------------------------------------------------------------------------------|
+| DHT           | Temperature and Humidity sensor support for DHT11 and DHT22                  |
+| BME680        | Temperature, Humidity, Pressure, and Gas sensor support for DHT11 and DHT22  |
+| Camera        | Camera driver support for OV2640, OV3660, OV5640, OV7670 and OV7725          |
