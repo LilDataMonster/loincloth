@@ -1,0 +1,24 @@
+---
+title: 'Adding Sensors'
+metaTitle: 'Adding Sensors'
+metaDescription: 'Adding Sensors'
+---
+
+## Introduction
+
+The [LDM-Sensors](https://github.com/LilDataMonster/ldm-sensors) provides an interface to communicate with sensors. An abstract class for a sensor object is created as [include/sensor.hpp](https://github.com/LilDataMonster/ldm-sensors/blob/master/include/sensor.hpp) which defines virtual functions in which a sensor must provide.
+
+
+| Virtual Function                           | Description                                                                 |
+|--------------------------------------------|-----------------------------------------------------------------------------|
+| `virtual esp_err_t init(void)`             | Initialize sensor (one-time call)                                           |
+| `virtual esp_err_t deinit(void)`           | Deinitialize sensor (one-time call)                                         |
+| `virtual esp_err_t readSensor(void)`       | Read sensor and update internal data                                        |
+| `virtual const char * getSensorName(void)` | Return the name of the sensor                                               |
+| `virtual cJSON * buildJSON(void)`          | Return a cJSON object of sensor data                                        |
+| `virtual esp_err_t releaseData(void)`      | Clean up/Release sensor data (primarily used to preserve memory allocation) |
+
+Currently, the code base utilizes RTOS to designate tasks and scheduling. The sensor task has been moved into [main.cpp](https://github.com/LilDataMonster/loincloth/blob/master/main/main.cpp) due to task memory allocation issues (for camera sensors). Sensor implementations are found supporting the [DHT](https://github.com/LilDataMonster/ldm-sensors/blob/master/src/dht.cpp), [BME680](https://github.com/LilDataMonster/ldm-sensors/blob/master/src/bme680.cpp), and [OVA Camera](https://github.com/LilDataMonster/ldm-sensors/blob/master/src/camera.cpp). Associated header files are stored in the [include/](https://github.com/LilDataMonster/ldm-sensors/tree/master/include) folder.
+
+
+The `virtual cJSON * buildJSON(void)` function utilizes [cJSON](https://github.com/DaveGamble/cJSON) as an [ESP-IDF component](https://github.com/espressif/esp-idf/tree/master/components/json) library to generate sensor data output.
