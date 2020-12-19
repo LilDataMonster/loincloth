@@ -22,6 +22,7 @@
 #include <ble.hpp>
 #include <system.hpp>
 
+#include <driver/uart.h>
 #include <driver/gpio.h>
 #include <uri_handles.hpp>
 
@@ -207,7 +208,6 @@ void http_task(void *pvParameters) {
 
                 // POST JSON data
                 http.postJSON(json_data);
-
                 // char* post_data = cJSON_Print(json_data);
                 // ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
                 // http.postFormattedJSON(post_data);
@@ -222,7 +222,7 @@ void http_task(void *pvParameters) {
         } else {
             ESP_LOGI(HTTP_TASK_LOG, "Wifi is not connected");
         }
-        vTaskDelay(pdMS_TO_TICKS(30000));
+        vTaskDelay(pdMS_TO_TICKS(60000));
     }
     // // cleanup JSON message
     // cJSON_Delete(message);
@@ -234,6 +234,44 @@ void http_task(void *pvParameters) {
 
     // messageFinished = true;
     // vTaskDelete(NULL);
+}
+
+#define XBEE_TASK_LOG "XBEE_TASK"
+const int RX_BUF_SIZE = 1024;
+#define TXD_PIN (GPIO_NUM_23)
+#define RXD_PIN (GPIO_NUM_22)
+void xbee_task(void *pvParameters) {
+    const uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_APB,
+    };
+
+    uart_driver_install(UART_NUM_1, RX_BUF_SIZE * 4, RX_BUF_SIZE * 4, 0, NULL, 0);
+    uart_param_config(UART_NUM_1, &uart_config);
+    uart_set_pin(UART_NUM_1, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    const char *TX_TASK_TAG = "TX_TASK";
+    vTaskDelay(pdMS_TO_TICKS(30000));
+    while(true) {
+        if(json_data != NULL) {
+
+            // POST JSON data
+            char *post_data = cJSON_Print(json_data);
+
+            const int len = strlen(post_data);
+            esp_log_level_set(TX_TASK_TAG, ESP_LOG_INFO);
+            const int txBytes = uart_write_bytes(UART_NUM_1, post_data, len);
+            ESP_LOGI(TX_TASK_TAG, "Wrote %d bytes", txBytes);
+            printf("%s\n", post_data);
+        } else {
+            ESP_LOGI(XBEE_TASK_LOG, "SENSOR_JSON value is NULL");
+        }
+        vTaskDelay(pdMS_TO_TICKS(60000));
+    }
+
 }
 
 #define SLEEP_TASK_LOG "SLEEP_TASK"

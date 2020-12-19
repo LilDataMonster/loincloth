@@ -106,14 +106,14 @@ void app_main(void) {
     g_nvs->commit();
 
     uint8_t ssid[32];
-    uint8_t passwd[64];
+    uint8_t passwd[128];
 
     // load wifi settings from NVS memory (or set default if wifi settings don't exist)
     err = g_nvs->getKeyStr("wifi_ssid", NULL, &wifi_size);      // fetch wifi ssid size (max 32)
     if(err == ESP_OK) {
         // g_nvs->getKeyStr("wifi_ssid", (char*)ssid, &wifi_size);
         g_nvs->getKeyStr("wifi_ssid", (char*)wifi_config.sta.ssid, &wifi_size);
-        // g_nvs->getKeyStr("wifi_password", NULL, &wifi_size);  // fetch wifi ssid size (max 64)
+        g_nvs->getKeyStr("wifi_password", NULL, &wifi_size);  // fetch wifi ssid size (max 64)
         // g_nvs->getKeyStr("wifi_password", (char*)passwd, &wifi_size);
         g_nvs->getKeyStr("wifi_password", (char*)wifi_config.sta.password, &wifi_size);
     } else {
@@ -157,6 +157,10 @@ void app_main(void) {
     // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL); // task: watcher for initiating sleeps
     // xTaskCreate(sensor_task, "sensor_task", 8192, (void*)&sensors, 5, NULL);                   // task: sensor data (moved into main.cpp)
     xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);                                     // task: publishing data with REST POST
+   
+    #if CONFIG_ZIGBEE_ENABLED
+        xTaskCreate(xbee_task, "xbee_task", 8192, NULL, 5, NULL); 
+    #endif
     // xTaskCreate(led_fade_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);         // task: fade LED lights
     xTaskCreate(led_on_off_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);          // task: turn on/off LED lights (no fade)
 
