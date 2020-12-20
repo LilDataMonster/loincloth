@@ -20,5 +20,10 @@ The [LDM-Sensors](https://github.com/LilDataMonster/ldm-sensors) provides an int
 
 Currently, the code base utilizes RTOS to designate tasks and scheduling. The sensor task has been moved into [main.cpp](https://github.com/LilDataMonster/loincloth/blob/master/main/main.cpp) due to task memory allocation issues (for camera sensors). Sensor implementations are found supporting the [DHT](https://github.com/LilDataMonster/ldm-sensors/blob/master/src/dht.cpp), [BME680](https://github.com/LilDataMonster/ldm-sensors/blob/master/src/bme680.cpp), and [OVA Camera](https://github.com/LilDataMonster/ldm-sensors/blob/master/src/camera.cpp). Associated header files are stored in the [include/](https://github.com/LilDataMonster/ldm-sensors/tree/master/include) folder.
 
-
 The `virtual cJSON * buildJSON(void)` function utilizes [cJSON](https://github.com/DaveGamble/cJSON) as an [ESP-IDF component](https://github.com/espressif/esp-idf/tree/master/components/json) library to generate sensor data output.
+
+## Adding Sensors to Code
+
+The code in [`main.cpp`](https://github.com/LilDataMonster/loincloth/blob/master/main/main.cpp) initializes and defines the use of the sensor. A header file [`globals.hpp`](https://github.com/LilDataMonster/loincloth/blob/master/main/globals.hpp) defines handles to the sensor with the use of `extern` allowing it to be used throughout the source code.
+
+The use of the sensors in [`main.cpp`](https://github.com/LilDataMonster/loincloth/blob/master/main/main.cpp) utilizes a vector of abstract Sensor objects.

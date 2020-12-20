@@ -125,7 +125,7 @@ source $IDF_PATH/export.sh
 export IDF_LIB_PATH=$WORKSPACE/esp-idf-lib
 
 # clone the project
-git clone https://github.com/LilDataMonster/loincloth.git
+git clone https://github.com/LilDataMonster/loincloth.git --recursive
 cd loincloth
 ```
 
@@ -199,17 +199,30 @@ idf.py -p /dev/ttyUSB0 flash monitor
 
 ## Menu Configuration Options (`idf.py menuconfig`)
 
-The `Monster Configuration` menu defines several parameters used for the software stack.
+Custom menu configurations are avaliable to customize various parameters before flashing the firmware. There are 3 customization menus are added which are listed below.
 
-| Menu Option          | Description      |
-|----------------------|------------------|
-| WiFi SSID            | WiFi SSID AP to connect to |
-| WiFi Password        | WiFi Password to connect to AP with |
-| WiFi listen interval | Number of intervals for station to listen to becon from AP |
-| Power Save Mode      | Power save mode for the ESP32 to use |
-| Max CPU Frequency    | Maximum CPU frequency to use for dynamic frequency scaling |
-| Min CPU Frequency    | Minimum CPU frequency to use for dynamic frequency scaling, should be set to a factor of XTAL frequency |
-| DHT11 GPIO Pin       | GPIO pin to read the DHT11 sensor |
-| HTTP POST Endpoint   | HTTP endpoint to post data |
+- LDM Library - [LDM-LIB](https://github.com/LilDataMonster/ldm-lib) library adjustable parameters
+- LDM Sensors - [LDM-Sensors](https://github.com/LilDataMonster/ldm-sensors) library adjustable parameters
+- Loincloth Setup - Adjustable parameters particular to the Loincloth build
+
+### LDM Library
+
+| Menu Option           | Description      |
+|-----------------------|------------------|
+| WiFi Configuration    | Default WiFi SSID and Password to use |
+| Power Save Mode       | Power saving modes for wireless communication |
+| Maximum CPU Frequency | Maximum CPU frequency to use for dynamic frequency scaling |
+| Minimum CPU Frequency | Minimum CPU frequency to use for dynamic frequency scaling, should be set to a factor of XTAL frequency |
+| OTA Updates           | URL location to check for updated firmware (with SSL/TLS support) |
+
+### Loincloth Setup
+
+| Menu Option                | Description      |
+|----------------------------|------------------|
+| Bluetooth Device Name      | Set Bluetooth display name |
+| HTTP POST Endpoint         | HTTP endpoint to post data |
+| Deep Sleep Duration        | Duration timer for system deep sleep |
+| Advertising BLE Duration   | (TODO; Deprecated) |
+| Enable Zigbee Transmission | Enable zigbee support |
 
 ---

@@ -14,8 +14,12 @@
       link: '/development/getting-started'
     - label: 'Code Features'
       link: '/development/code-features'
+    - label: 'Code Structure'
+      link: '/development/code-structure'
     - label: 'Adding Sensors'
       link: '/development/adding-sensors'
+    - label: 'Building Documentation'
+      link: '/development/building-documentation'
 - label: Communication
   items:
     - label: 'Bluetooth'

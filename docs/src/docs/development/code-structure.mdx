@@ -1,0 +1,39 @@
+---
+title: 'Code Structure'
+metaTitle: 'Code Structure'
+metaDescription: 'Code Structure'
+---
+
+## Introduction
+
+The code structure is setup and defined by the table below.
+
+| Repository Structure | Description                                                                  |
+|----------------------|------------------------------------------------------------------------------|
+| `components/`        | External libraries/git submodules                                            |
+| `docs/`              | Source code for building documentation page                                  |
+| `main/`              | Main source code for the firmware                                            |
+| `.gitignore`         | .gitignore for the repository                                                |
+| `.gitmodules`        | .gitmodules for external libraries                                           |
+| `.travis.yml`        | TravisCI configuration for executing unittests and  actions                  |
+| `CMakeLists.txt`     | CMakeLists.txt directive for compiling source code                           |
+| `Makefile`           | Makefile directive for compiling source code                                 |
+| `README.md`          | Readme for the repository                                                    |
+| `partitions.csv`     | Memory partitions for dividing up the microcontroller onboard memory         |
+| `sdkconfig.defaults` | Default `menuconfig` parameters for compilation                              |
+
+## Main File structure
+
+| Repository Structure | Description                                                                  |
+|----------------------|------------------------------------------------------------------------------|
+| `CMakeLists.txt`     | CMakeLists.txt directive for compiling source code                           |
+| `Kconfig.projbuild`  | Kconfig parameters for creating `menuconfig` options                         |
+| `ble_services.cpp`   | Bluetooth services source file                                               |
+| `ble_services.hpp`   | Bluetooth services header file                                               |
+| `component.mk`       | Makefile directives for constructing source as component                     |
+| `globals.hpp`        | Global header file for `extern` global variables (probably will deprecate)   |
+| `main.cpp`           | Main source code file and entry point                                        |
+| `tasks.cpp`          | RTOS tasks definition source file                                            |
+| `tasks.hpp`          | RTOS tasks definition header file                                            |
+| `uri_handles.cpp`    | URI Handles and definitions source file for HTTP Server hosted on-chip       |
+| `uri_handles.hpp`    | URI Handles and definitions header file for HTTP Server hosted on-chip       |
