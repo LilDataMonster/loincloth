@@ -9,7 +9,7 @@
     - label: 'Device Operation'
       link: '/usage/operation'
     - label: 'Security'
-      label: '/usage/security'
+      link: '/usage/security'
 - label: Development
   items:
     - label: 'Getting Started'
