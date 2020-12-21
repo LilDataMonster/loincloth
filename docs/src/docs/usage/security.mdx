@@ -1,0 +1,29 @@
+---
+title: 'Security'
+metaTitle: 'Security Page'
+metaDescription: 'Security'
+---
+
+## Introduction
+
+## SSL/TLS Server Certificates
+
+Over-The-Air (OTA) updates and other HTTP RESTful communication provides support for security certificates. The certificates are stored into memory and used for trust verification when communicating to an external server.
+
+TODO: Add how-to for embedding key to build
+
+## Flash Encryption
+
+[Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html) builds secure firmware compiles. The off-chip memory is encrypted so the physical readout of the chip cannot be recovered. The data encrypted by default is the build's:
+
+- Firmware Bootloader
+- Partition Table
+- App Partition Builds
+
+TODO: Document support for encryption
+
+## Secure Boot
+
+[Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v1.html) and [Secure Boot V2](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v2.html) provides support for verifying only trusted code will be executed through an RSA/AES verification processes.
+
+TODO: Document support for secure boot
