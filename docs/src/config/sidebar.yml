@@ -30,3 +30,4 @@
       link: '/communication/http-rest'
     - label: 'XBee'
       link: '/communication/xbee'
+ - label: Support
