@@ -1,0 +1,34 @@
+# XBee Setup
+The ESP32 Microcontroller communicates with the Xbee over UART. The Xbee then will send any data it receives from the ESP32 over Zigbee to the other Xbee device. The other Xbee device receives
+this data and outputs it over UART to another ESP32. This is called transparent mode, where any data that is sent over serial to the Xbee will be transmitted and any data received will be sent over
+serial.
+##Setting up transparent mode
+There are a few different programs that can be used to program the Xbees:
+- Digi XCTU (Windows and Linux)
+- Digi XBee Mobile App (iOS and Android)
+One thing to note is that XCTU needs to be used to first enable bluetooth capability in order for the Mobile App to work.
+Parameters to configure include for each Xbee include:
+- DH: Destination Address High
+    - Other XBee's SH: Serial Number High
+- DL: Destination Address Low
+    - Other XBee's SL: Serial Number Low
+- CH: Channel Frequency
+    - Must be the same for both
+- ID: Network ID
+    - Must be the same for both
+- NI: Node Identifier
+    - Unique to each XBee
+UART must be enabled and set to default pins as well as 115200 baud rate
+Transparent mode must be enabled
+One Xbee must be set as the router and another as a sender.
+The firmware being used is the latest RF firmware that uses the Zigbee protocol
+More information can be found here:
+https://www.digi.com/resources/documentation/Digidocs/90001942-13/concepts/c_transparent_mode_detailed.htm?TocPath=XBee%20transparent%20mode%7CXBee%20transparent%20mode%20in%20detail%7C_____0
+The XBees are programmed using AT commands over UART.
+Future plans for the ESP32 include automatically configuring the XBee's upon start up to ensure no changes have been made. As well as moving away from transparent mode to API mode. This will enable 
+the quick changing of endpoints. 
+##Reading Data from XBee
+The ESP32 is collecting the data from the XBee. It can be read by using Putty or another serial communication program in windows or linux.
+The baud rate is 115200, 
+For more in depth details, visit:
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/establish-serial-connection.html

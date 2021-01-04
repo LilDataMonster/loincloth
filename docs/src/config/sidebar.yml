@@ -20,6 +20,10 @@
       link: '/development/code-structure'
     - label: 'Adding Sensors'
       link: '/development/adding-sensors'
+    - label: 'Configuring XBee Zigbee'
+      link: '/development/config-xbee-zigbee'
+    - label: 'Hardware Setup'
+      link: '/development/hardware-setup'
     - label: 'Building Documentation'
       link: '/development/building-documentation'
 - label: Communication
@@ -30,4 +34,3 @@
       link: '/communication/http-rest'
     - label: 'XBee'
       link: '/communication/xbee'
- - label: Support
