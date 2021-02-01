@@ -222,7 +222,7 @@ void http_task(void *pvParameters) {
         } else {
             ESP_LOGI(HTTP_TASK_LOG, "Wifi is not connected");
         }
-        vTaskDelay(pdMS_TO_TICKS(60000));
+        vTaskDelay(pdMS_TO_TICKS(30000));
     }
     // // cleanup JSON message
     // cJSON_Delete(message);
@@ -254,7 +254,7 @@ void xbee_task(void *pvParameters) {
     uart_param_config(UART_NUM_1, &uart_config);
     uart_set_pin(UART_NUM_1, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     const char *TX_TASK_TAG = "TX_TASK";
-    vTaskDelay(pdMS_TO_TICKS(30000));
+    //vTaskDelay(pdMS_TO_TICKS(30000));
     while(true) {
         if(json_data != NULL) {
 
