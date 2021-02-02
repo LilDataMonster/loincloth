@@ -29,6 +29,9 @@ The XBees are programmed using AT commands over UART.
 Future plans for the ESP32 include automatically configuring the XBee's upon start up to ensure no changes have been made. As well as moving away from transparent mode to API mode. This will enable 
 the quick changing of endpoints. 
 
+## Profile Loading
+The Digi XCTU software allows the user to load and save profiles that allow easy changing of the XBee. These files have been placed in xbee_config in the XBee branch of this repository. The names are lildatasender and notsobigdata. lildatasender attaches to the ESP32 with the sensors attached to it. notsobigdata is the receiver of this data and hooks up to the other ESP32.
+
 ## Reading Data from XBee
 The ESP32 is collecting the data from the XBee. It can be read by using Putty or another serial communication program in windows or linux.
 The baud rate is 115200, 
