@@ -3,7 +3,7 @@ The ESP32 Microcontroller communicates with the Xbee over UART. The Xbee then wi
 this data and outputs it over UART to another ESP32. This is called transparent mode, where any data that is sent over serial to the Xbee will be transmitted and any data received will be sent over
 serial.
 
-##Setting up transparent mode
+## Setting up transparent mode
 There are a few different programs that can be used to program the Xbees:
 - Digi XCTU (Windows and Linux)
 - Digi XBee Mobile App (iOS and Android)
@@ -29,7 +29,7 @@ The XBees are programmed using AT commands over UART.
 Future plans for the ESP32 include automatically configuring the XBee's upon start up to ensure no changes have been made. As well as moving away from transparent mode to API mode. This will enable 
 the quick changing of endpoints. 
 
-##Reading Data from XBee
+## Reading Data from XBee
 The ESP32 is collecting the data from the XBee. It can be read by using Putty or another serial communication program in windows or linux.
 The baud rate is 115200, 
 For more in depth details, visit:
