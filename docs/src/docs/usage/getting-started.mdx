@@ -133,6 +133,26 @@ Once the environment is setup, the steps from [Flashing the Device](#flashing-th
 
 ---
 
+# Config the Device
+
+To enable sensors, set up wifi, and enable XBee transmission menuconfig must be ran as follows.
+
+```bash
+docker run \
+        -it \
+        --rm \
+        --privileged \
+        --device /dev/ttyUSB0:/dev/ttyUSB0 \
+        -e LC_ALL=C.UTF-8 \
+        -e IDF_LIB_PATH=/esp-lib \
+        -v $WORKSPACE/esp-idf-lib:/esp-lib \
+        -v $WORKSPACE/loincloth:/project \
+        -w /project \
+        espressif/idf:release-v4.2 idf.py menuconfig
+```
+
+---
+
 # Flashing the Device
 
 Flashing the device can be done using the following steps. The setup is the same for both Docker and the manual setup using the `idf.py` command. In the docker setup, the full `docker run` command must be used with all the appropriate arguments followed by `espressif/idf idf.py` and the corresponding commands below.
