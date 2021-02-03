@@ -69,7 +69,7 @@ docker run \
         -v $WORKSPACE/esp-idf-lib:/esp-lib \
         -v $WORKSPACE/loincloth:/project \
         -w /project \
-        espressif/idf idf.py
+        espressif/idf:release-v4.2 idf.py
 ```
 
 | Docker Argument                 | Description                                                                                    |
@@ -150,7 +150,7 @@ docker run \
         -v $WORKSPACE/esp-idf-lib:/esp-lib \
         -v $WORKSPACE/loincloth:/project \
         -w /project \
-        espressif/idf idf.py -p /dev/ttyUSB0 flash monitor
+        espressif/idf:release-v4.2 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 
 ## Set Target Device
@@ -224,5 +224,8 @@ Custom menu configurations are avaliable to customize various parameters before 
 | Deep Sleep Duration        | Duration timer for system deep sleep |
 | Advertising BLE Duration   | (TODO; Deprecated) |
 | Enable Zigbee Transmission | Enable zigbee support |
+
+### Blufi Enabling
+Component config ---> Bluetooth ---> Bluedroid Options ---> Include Blufi Function
 
 ---
