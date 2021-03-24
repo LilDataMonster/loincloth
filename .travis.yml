@@ -8,7 +8,7 @@ jobs:
       services:
         - docker
       before_install:
-        - docker pull espressif/idf
+        - docker pull espressif/idf:release-v4.2
       script:
         - git clone https://github.com/Kanaderu/esp-idf-lib $HOME/esp-idf-lib
         - echo "CONFIG_DHT11_SENSOR_ENABLED=y" >> sdkconfig.defaults
@@ -30,11 +30,12 @@ jobs:
           -v $PWD:/project
           -w /project
           espressif/idf:release-v4.2 idf.py -p /dev/ttyUSB0 build
+
     - name: "Compile source with build tools with BME680 for ESP32"
       services:
         - docker
       before_install:
-        - docker pull espressif/idf
+        - docker pull espressif/idf:release-v4.2
       script:
         - git clone https://github.com/Kanaderu/esp-idf-lib $HOME/esp-idf-lib
         - echo "CONFIG_BME680_SENSOR_ENABLED=y" >> sdkconfig.defaults
@@ -57,9 +58,9 @@ jobs:
           -w /project
           espressif/idf:release-v4.2 idf.py -p /dev/ttyUSB0 build
 
-#    - stage: deployment
+    - stage: deployment
       name: "Deploy GitHub Pages Documentation"
-#      if: branch = master # run job only on master
+      if: branch = master # run job only on master
       language: node_js
       node_js:
         - 12
