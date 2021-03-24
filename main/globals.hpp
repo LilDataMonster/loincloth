@@ -1,6 +1,7 @@
 #ifndef SENSORS
 #define SENSORS
 
+#include <sensor.hpp>
 #include <vector>
 #include <cJSON.h>
 #include <ble.hpp>
