@@ -267,9 +267,9 @@ void app_main(void) {
             // update NVS memory with ssid and password if different from initial ssid/password
             // this allows for the device to remember WIFI/PASSWORD configurations if power is disconnected
 
-            // ESP_LOGI(APP_MAIN, "Comparing SSID: %s to tmp_SSID: %s", wifi_config.sta.ssid, wifi_config_tmp.sta.ssid);
-            // ESP_LOGI(APP_MAIN, "Comparing password: %s to tmp_password: %s", wifi_config.sta.password, wifi_config_tmp.sta.password);
-            if(std::strcmp((char*)wifi_config.sta.ssid, (char*)wifi_config_tmp.sta.ssid) != 0 &&
+            //ESP_LOGI(APP_MAIN, "Comparing SSID: %s to tmp_SSID: %s, strcmp: %d", wifi_config.sta.ssid, wifi_config_tmp.sta.ssid, std::strcmp((char*)wifi_config.sta.ssid, (char*)wifi_config_tmp.sta.ssid));
+            //ESP_LOGI(APP_MAIN, "Comparing password: %s to tmp_password: %s, strcmp: %d", wifi_config.sta.password, wifi_config_tmp.sta.password, std::strcmp((char*)wifi_config.sta.password, (char*)wifi_config_tmp.sta.password));
+            if(std::strcmp((char*)wifi_config.sta.ssid, (char*)wifi_config_tmp.sta.ssid) != 0 ||
                std::strcmp((char*)wifi_config.sta.password, (char*)wifi_config_tmp.sta.password) != 0){
                err = g_nvs->openNamespace("system");
                if(err == ESP_OK) {
