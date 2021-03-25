@@ -44,9 +44,9 @@ LDM::BME680 bme680;
 #include <camera.hpp>
 
 // setup camera image resolution/configufation
-LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 10, 1);
+// LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 10, 1);
 // LDM::Camera camera = LDM::Camera(FRAMESIZE_QCIF, PIXFORMAT_JPEG, 10, 1);
-// LDM::Camera camera = LDM::Camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 10, 1);
+LDM::Camera camera = LDM::Camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 15, 1, 10000000);
 // LDM::Camera camera = LDM::Camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 50, 1);
 // LDM::Camera camera = LDM::Camera(FRAMESIZE_HVGA, PIXFORMAT_JPEG, 20, 1);
 // LDM::Camera camera = LDM::Camera(FRAMESIZE_VGA, PIXFORMAT_JPEG, 30, 1);
@@ -157,12 +157,12 @@ void app_main(void) {
     // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL); // task: watcher for initiating sleeps
     // xTaskCreate(sensor_task, "sensor_task", 8192, (void*)&sensors, 5, NULL);                   // task: sensor data (moved into main.cpp)
     xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);                                     // task: publishing data with REST POST
-   
+
     #if CONFIG_ZIGBEE_ENABLED
-        xTaskCreate(xbee_task, "xbee_task", 8192, NULL, 5, NULL); 
+        xTaskCreate(xbee_task, "xbee_task", 8192, NULL, 5, NULL);
     #endif
     // xTaskCreate(led_fade_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);         // task: fade LED lights
-    xTaskCreate(led_on_off_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);          // task: turn on/off LED lights (no fade)
+    // xTaskCreate(led_on_off_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);          // task: turn on/off LED lights (no fade)
 
     // sensor task moved here
     while(true) {
@@ -233,9 +233,11 @@ void app_main(void) {
             // TODO: Look into proper memory/heap allocation for camera data to place into a task
             // if sensor is a camera, build the JSON data for its hex64 encoded representation (memory intensive)
             if(std::strcmp(sensor->getSensorName(), "Camera") != 0) {
+                // ESP_LOGI(APP_MAIN, "Heap size before: %d", esp_get_free_heap_size());
                 cJSON *sensor_json = sensor->buildJson();
                 cJSON_AddItemToObject(json_data, sensor->getSensorName(), sensor_json);
                 sensor->releaseData();
+                // ESP_LOGI(APP_MAIN, "Heap size after: %d", esp_get_free_heap_size());
             }
 
             // char* sensor_out = cJSON_Print(sensor_json);
