@@ -13,6 +13,7 @@ void sleep_task(void *pvParameters);
 void led_on_off_task(void *pvParameters);
 void led_fade_task(void *pvParameters);
 
+void dummy_xbee_task(void *pvParameters);
 extern cJSON * json_data;
 
 }

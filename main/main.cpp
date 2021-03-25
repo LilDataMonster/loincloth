@@ -16,6 +16,9 @@
 // enum BoardMode { setup, sleep };
 // static BoardMode mode = setup;
 
+enum CommunicationMode { cm_blufi, cm_xbee };
+static CommunicationMode comm_mode = cm_blufi;
+
 #include <nvs.hpp>
 #include <sleep.hpp>
 #include <system.hpp>
@@ -99,6 +102,26 @@ void app_main(void) {
     g_nvs = &nvs;
     g_nvs->openNamespace("system");
 
+    // load/update communication mode
+    err = g_nvs->getKeyU8("cm", (uint8_t*)&comm_mode);
+    if(err == ESP_OK) {
+        switch(comm_mode) {
+            case cm_blufi:
+                g_nvs->setKeyU8("cm", (uint8_t)cm_xbee);
+                break;
+            case cm_xbee:
+                g_nvs->setKeyU8("cm", (uint8_t)cm_blufi);
+                break;
+            default:
+                break;
+        }
+    } else {
+        // set the next mode to be xbee by default and
+        // continue processing default mode (blufi)
+        g_nvs->setKeyU8("cm", (uint8_t)cm_xbee);
+    }
+    g_nvs->commit();
+
     // load/update 'broadcast' variable in NVS
     g_nvs->getKeyU8("broadcast", &broadcast);
     broadcast++;
@@ -134,12 +157,15 @@ void app_main(void) {
 
     // initialize bluetooth device
     LDM::BLE ble_dev(const_cast<char*>(CONFIG_BLUETOOTH_DEVICE_NAME));
-    ble_dev.init();                                           // initialize bluetooth
-    ble_dev.setupDefaultBlufiCallback();                      // setup blufi configuration
-    ble_dev.initBlufi(&wifi_config);                          // initialize blufi with given wifi configuration
-    ble_dev.registerGattServerCallback(gatts_event_handler);  // setup ble gatt server callback handle
-    ble_dev.registerGattServerAppId(ESP_APP_ID);              // setup ble gatt application profile from database
-    g_ble = &ble_dev;
+    if(comm_mode == cm_blufi) {
+        ESP_LOGI(APP_MAIN, "Initializing Blufi");
+        ble_dev.init();                                           // initialize bluetooth
+        ble_dev.setupDefaultBlufiCallback();                      // setup blufi configuration
+        ble_dev.initBlufi(&wifi_config);                          // initialize blufi with given wifi configuration
+        ble_dev.registerGattServerCallback(gatts_event_handler);  // setup ble gatt server callback handle
+        ble_dev.registerGattServerAppId(ESP_APP_ID);              // setup ble gatt application profile from database
+        g_ble = &ble_dev;
+    }
 
     // initialize sensor
     for(auto const& sensor : sensors) {
@@ -154,47 +180,61 @@ void app_main(void) {
     server_config->send_wait_timeout = 20;
 
     // setup RTOS tasks
-    // xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL); // task: watcher for initiating sleeps
+    xTaskCreate(sleep_task, "sleep_task", configMINIMAL_STACK_SIZE, (void*)&sensors, 5, NULL); // task: watcher for initiating sleeps
     // xTaskCreate(sensor_task, "sensor_task", 8192, (void*)&sensors, 5, NULL);                   // task: sensor data (moved into main.cpp)
-    xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);                                     // task: publishing data with REST POST
 
-    #if CONFIG_ZIGBEE_ENABLED
+    // enable tasks related to blufi
+    if(comm_mode == cm_blufi) {
+        xTaskCreate(http_task, "http_task", 8192, NULL, 5, NULL);                                     // task: publishing data with REST POST
+    }
+
+    // // enable tasks related to xbee
+    // if(comm_mode == cm_xbee) {
+    //     xTaskCreate(dummy_xbee_task, "xbee_task", 8192, NULL, 5, NULL);
+    // }
+
+#if CONFIG_ZIGBEE_ENABLED
+    // enable tasks related to xbee
+    if(comm_mode == cm_xbee) {
         xTaskCreate(xbee_task, "xbee_task", 8192, NULL, 5, NULL);
-    #endif
+    }
+#endif
     // xTaskCreate(led_fade_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);         // task: fade LED lights
     // xTaskCreate(led_on_off_task, "led_task", 3*configMINIMAL_STACK_SIZE, NULL, 5, NULL);          // task: turn on/off LED lights (no fade)
 
     // sensor task moved here
     while(true) {
 
-        // update bluetooth characteristic with latest ipv4 address
-        if(ble_dev.wifi.getIpv4(ipv4) != ESP_OK) {
-            ESP_LOGE(APP_MAIN, "Unable to fetch IPV4");
-            ipv4[0] = 0;
-            ipv4[1] = 0;
-            ipv4[2] = 0;
-            ipv4[3] = 0;
-        } else {
-            ESP_LOGI(APP_MAIN, "Fetched IPV4: %x:%x:%x:%x", ipv4[0], ipv4[1], ipv4[2], ipv4[3]);
-            err = bleUpdateIpv4();
-            if(err != ESP_OK) {
-                ESP_LOGE(APP_MAIN, "Unable to update IPV4 Bluetooth characteristic");
+        if(g_ble != NULL) {
+            // update bluetooth characteristic with latest ipv4 address
+            if(g_ble->wifi.getIpv4(ipv4) != ESP_OK) {
+                ESP_LOGE(APP_MAIN, "Unable to fetch IPV4");
+                ipv4[0] = 0;
+                ipv4[1] = 0;
+                ipv4[2] = 0;
+                ipv4[3] = 0;
+            } else {
+                ESP_LOGI(APP_MAIN, "Fetched IPV4: %x:%x:%x:%x", ipv4[0], ipv4[1], ipv4[2], ipv4[3]);
+                err = bleUpdateIpv4();
+                if(err != ESP_OK) {
+                    ESP_LOGE(APP_MAIN, "Unable to update IPV4 Bluetooth characteristic");
+                }
             }
-        }
 
-        // start onboard HTTP server and register URI target locations for REST handles
-        // TODO: Handle disconnect/stopping server
-        if(g_ble->wifi.isConnected() && !g_http_server->isStarted()) {
-            g_http_server->startServer();
-            if(g_http_server->isStarted()) {
-                ESP_LOGI(APP_MAIN, "Registering HTTP Server URI Handles");
-                g_http_server->registerUriHandle(&uri_get);
-                g_http_server->registerUriHandle(&uri_post);
-                g_http_server->registerUriHandle(&uri_data);
-                g_http_server->registerUriHandle(&uri_get_camera);
-                g_http_server->registerUriHandle(&uri_post_config);
-                g_http_server->registerUriHandle(&uri_options_config);
-                g_http_server->registerUriHandle(&uri_get_stream);
+            // start onboard HTTP server and register URI target locations for REST handles
+            // TODO: Handle disconnect/stopping server
+            if(g_ble->wifi.isConnected() && !g_http_server->isStarted()) {
+                g_http_server->startServer();
+                if(g_http_server->isStarted()) {
+                    ESP_LOGI(APP_MAIN, "Registering HTTP Server URI Handles");
+                    g_http_server->registerUriHandle(&uri_get);
+                    g_http_server->registerUriHandle(&uri_post);
+                    g_http_server->registerUriHandle(&uri_data);
+                    g_http_server->registerUriHandle(&uri_get_camera);
+                    g_http_server->registerUriHandle(&uri_post_config);
+                    g_http_server->registerUriHandle(&uri_options_config);
+                    g_http_server->registerUriHandle(&uri_get_stream);
+                }
             }
         }
 
@@ -246,22 +286,26 @@ void app_main(void) {
         }
 
 #if CONFIG_DHT_SENSOR_ENABLED
-        // update bluetooth output with DHT sensor data
-        err = bleUpdateDht();
-        if(err != ESP_OK) {
-            ESP_LOGE(APP_MAIN, "Unable to update DHT Bluetooth characteristic");
+        if(g_ble != NULL) {
+            // update bluetooth output with DHT sensor data
+            err = bleUpdateDht();
+            if(err != ESP_OK) {
+                ESP_LOGE(APP_MAIN, "Unable to update DHT Bluetooth characteristic");
+            }
         }
 #endif
 
 #if CONFIG_BME680_SENSOR_ENABLED
-        // update bluetooth output BME680 sensor data
-        err = bleUpdateBme680();
-        if(err != ESP_OK) {
-            ESP_LOGE(APP_MAIN, "Unable to update BME680 Bluetooth characteristic");
+        if(g_ble != NULL) {
+            // update bluetooth output BME680 sensor data
+            err = bleUpdateBme680();
+            if(err != ESP_OK) {
+                ESP_LOGE(APP_MAIN, "Unable to update BME680 Bluetooth characteristic");
+            }
         }
 #endif
 
-        if(g_nvs != NULL) {
+        if(g_nvs != NULL && g_ble != NULL) {
             // get current wifi config
             wifi_config_t wifi_config_tmp;
             err |= g_ble->wifi.getConfig(ESP_IF_WIFI_STA, &wifi_config_tmp);
@@ -291,6 +335,6 @@ void app_main(void) {
         }
 
         // sleep
-        vTaskDelay(pdMS_TO_TICKS(30000));
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }

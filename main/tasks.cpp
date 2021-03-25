@@ -212,6 +212,9 @@ void http_task(void *pvParameters) {
                 // ESP_LOGI(HTTP_TASK_LOG, "%s", post_data);
                 // http.postFormattedJSON(post_data);
                 // free(post_data);
+
+                // break out of task to indicate ready to sleep
+                break;
             } else {
                 ESP_LOGI(HTTP_TASK_LOG, "SENSOR_JSON value is NULL");
             }
@@ -222,18 +225,30 @@ void http_task(void *pvParameters) {
         } else {
             ESP_LOGI(HTTP_TASK_LOG, "Wifi is not connected");
         }
-        vTaskDelay(pdMS_TO_TICKS(60000));
+        vTaskDelay(pdMS_TO_TICKS(4000));
     }
     // // cleanup JSON message
     // cJSON_Delete(message);
     // message = NULL;
 
-    // vEventGroupDelete(s_wifi_event_group);
-    // wifi.deinit_sta();
-    http.deinit();
+    // // vEventGroupDelete(s_wifi_event_group);
+    // // wifi.deinit_sta();
+    // http.deinit();
 
-    // messageFinished = true;
-    // vTaskDelete(NULL);
+    messageFinished = true;
+    ESP_LOGI(HTTP_TASK_LOG, "Message sent! Preparing for sleep");
+    vTaskDelete(NULL);
+}
+
+void dummy_xbee_task(void *pvParameters) {
+    // wait a bit
+    vTaskDelay(pdMS_TO_TICKS(30000));
+
+    // mark ready to sleep
+    messageFinished = true;
+
+    // delete task
+    vTaskDelete(NULL);
 }
 
 #define XBEE_TASK_LOG "XBEE_TASK"
@@ -283,15 +298,26 @@ void sleep_task(void *pvParameters) {
     while(true) {
         // check if ready to go to sleep (aka message is finished sending)
         if(messageFinished) {
-          
+
+            // shutdown bluetooth and wifi
+            if(g_ble != NULL) {
+                ESP_LOGI(SLEEP_TASK_LOG, "Shutting down Blufi");
+                // g_ble->wifi.disconnect();
+                // g_ble->wifi.deinit();
+                g_ble->deinitBlufi();
+                // g_ble->deinit();
+                // delete g_ble;
+            }
+
             // deinitialize sensors
             for(auto const& sensor : *sensors) {
                 sensor->deinit();
             }
 
             // enter deep sleep
+            ESP_LOGI(SLEEP_TASK_LOG, "Entering Deep Sleep");
             LDM::Sleep::enterDeepSleepSec(SLEEP_DURATION);
         }
-        vTaskDelay(pdMS_TO_TICKS(30000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
