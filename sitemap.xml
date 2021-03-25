@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/usage/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/communication/bluetooth/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/communication/http-rest/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/communication/xbee/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/adding-sensors/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/building-documentation/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/code-features/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/code-structure/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/config-xbee-zigbee/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/getting-started/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/development/hardware-setup/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/usage/getting-started/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/usage/operation/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+<url> <loc>https://lildatamonster.github.io/loincloth/loincloth/usage/security/</loc> <changefreq>daily</changefreq> <priority>0.7</priority> </url>
+</urlset>
